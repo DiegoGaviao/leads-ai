@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leads AI - Raio-X da Marca</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: { primary: '#8B5CF6', secondary: '#EC4899', dark: '#0F172A' }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glass {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .loading {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        input,
+        textarea {
+            transition: all 0.3s ease;
+        }
+
+        input:focus,
+        textarea:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(139, 92, 246, 0.2);
+        }
+    </style>
+    <!-- Meta Pixel Code -->
+    <script>
+        !function (f, b, e, v, n, t, s) {
+            if (f.fbq) return; n = f.fbq = function () {
+                n.callMethod ?
+                    n.callMethod.apply(n, arguments) : n.queue.push(arguments)
+            };
+            if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = '2.0';
+            n.queue = []; t = b.createElement(e); t.async = !0;
+            t.src = v; s = b.getElementsByTagName(e)[0];
+            s.parentNode.insertBefore(t, s)
+        }(window, document, 'script',
+            'https://connect.facebook.net/en_US/fbevents.js');
+        fbq('init', '198494758545786');
+        fbq('track', 'PageView');
+        fbq('track', 'Purchase', { value: 9.90, currency: 'BRL' }); // Compra Confirmada
+    </script>
+    <noscript><img height="1" width="1" style="display:none"
+            src="https://www.facebook.com/tr?id=198494758545786&ev=PageView&noscript=1" /></noscript>
+    <!-- End Meta Pixel Code -->
+</head>
+
+<body class="bg-dark text-white min-h-screen pb-20">
+
+    <header class="py-12 px-6 text-center">
+        <div
+            class="inline-block p-4 rounded-full bg-green-500/10 text-green-400 text-3xl mb-4 border border-green-500/20">
+            ✅
+        </div>
+        <h1 class="text-2xl md:text-3xl font-bold mb-2">Pagamento Confirmado!</h1>
+        <p class="text-gray-400 text-sm">Agora vamos calibrar a IA com a <strong>Alma da sua Marca</strong>.</p>
+    </header>
+
+    <main class="px-6 max-w-3xl mx-auto">
+        <div class="glass rounded-2xl p-8 shadow-2xl">
+
+            <form id="analysisForm" class="space-y-8">
+                <input type="hidden" name="plano" value="basico">
+
+                <!-- Contact Info -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-1">Seu Instagram</label>
+                        <input type="text" name="instagram" placeholder="@seu_perfil"
+                            class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white focus:ring-2 focus:ring-primary outline-none"
+                            required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-1">Seu WhatsApp</label>
+                        <input type="tel" name="whatsapp" placeholder="(11) 99999-9999"
+                            class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white focus:ring-2 focus:ring-primary outline-none"
+                            required>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-400 mb-1">E-mail para receber os
+                            Arquivos</label>
+                        <input type="email" name="email" placeholder="voce@exemplo.com"
+                            class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white focus:ring-2 focus:ring-primary outline-none"
+                            required>
+                    </div>
+                </div>
+
+                <div class="w-full h-px bg-gray-700/50 my-6"></div>
+
+                <div class="text-center mb-6">
+                    <h2 class="text-xl font-bold text-white mb-2">🧬 O Raio-X da Marca</h2>
+                    <p class="text-xs text-gray-400">Responda com o coração. Nossa IA usará isso para criar sua
+                        Estratégia.</p>
+                </div>
+
+                <!-- Briefing Questions -->
+                <div class="space-y-6">
+
+                    <!-- 1. Missão -->
+                    <div class="border border-gray-700 rounded-xl p-6 bg-gray-800/30">
+                        <label class="block text-sm font-bold text-purple-300 mb-2">1. QUAL É A SUA MISSÃO?</label>
+                        <p class="text-xs text-gray-500 mb-3">Qual transformação você gera? Por que você faz o que faz?
+                        </p>
+                        <textarea name="missao" rows="3"
+                            placeholder="Ex: Ajudar mães a terem uma rotina mais leve e organizada..."
+                            class="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:ring-2 focus:ring-purple-500 outline-none"
+                            required></textarea>
+                    </div>
+
+                    <!-- 2. Inimigo -->
+                    <div class="border border-gray-700 rounded-xl p-6 bg-gray-800/30">
+                        <label class="block text-sm font-bold text-red-400 mb-2">2. QUEM É O INIMIGO COMUM?</label>
+                        <p class="text-xs text-gray-500 mb-3">O que você e seu público combatem? O que você NÃO É de
+                            jeito nenhum?</p>
+                        <textarea name="inimigo" rows="3"
+                            placeholder="Ex: Eu combato a ideia de 'Mãe Perfeita'. Eu odeio dicas de organização que levam horas..."
+                            class="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:ring-2 focus:ring-red-500 outline-none"
+                            required></textarea>
+                    </div>
+
+                    <!-- 3. Dor -->
+                    <div class="border border-gray-700 rounded-xl p-6 bg-gray-800/30">
+                        <label class="block text-sm font-bold text-blue-300 mb-2">3. QUAL A DOR DO CLIENTE?</label>
+                        <p class="text-xs text-gray-500 mb-3">O que tira o sono dele à noite? Qual o problema urgente?
+                        </p>
+                        <textarea name="dor_cliente" rows="3"
+                            placeholder="Ex: Elas se sentem culpadas por não darem conta da casa e dos filhos..."
+                            class="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                            required></textarea>
+                    </div>
+
+                    <!-- 4. Método (Opcional/Sugerido) -->
+                    <div class="border border-gray-700 rounded-xl p-6 bg-gray-800/30">
+                        <label class="block text-sm font-bold text-green-300 mb-2">4. NOME DO SEU MÉTODO (Se
+                            tiver)</label>
+                        <p class="text-xs text-gray-500 mb-3">Se não tiver, deixe em branco que nossa IA vai sugerir um
+                            Acrônimo foda.</p>
+                        <input type="text" name="metodo_nome"
+                            placeholder="Ex: Método C.A.S.A (Se não tiver, deixe vazio)"
+                            class="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:ring-2 focus:ring-green-500 outline-none">
+                    </div>
+
+                    <!-- 5. Palavras-Chave -->
+                    <div class="border border-gray-700 rounded-xl p-6 bg-gray-800/30">
+                        <label class="block text-sm font-bold text-yellow-300 mb-2">5. PALAVRAS-CHAVE</label>
+                        <p class="text-xs text-gray-500 mb-3">Termos técnicos ou essenciais do seu nicho (separados por
+                            vírgula).</p>
+                        <input type="text" name="palavras_chave"
+                            placeholder="Ex: Maternidade real, rotina, organização, educação positiva..."
+                            class="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:ring-2 focus:ring-yellow-500 outline-none"
+                            required>
+                    </div>
+
+                </div>
+
+                <div class="pt-4">
+                    <button type="submit" id="submitBtn"
+                        class="w-full py-4 bg-gradient-to-r from-primary to-secondary rounded-xl font-bold text-lg shadow-lg hover:shadow-primary/40 transition-all flex justify-center items-center gap-2">
+                        <span>Gerar Minha Estratégia 🚀</span>
+                    </button>
+                    <p id="statusMsg" class="text-center text-xs text-gray-500 mt-4 h-4"></p>
+                </div>
+
+            </form>
+        </div>
+    </main>
+
+    <script>
+        const form = document.getElementById('analysisForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const statusMsg = document.getElementById('statusMsg');
+
+        // URL DO APPS SCRIPT (Mesma URL, o script deve salvar as novas colunas)
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwCihYfvKP9bgl5iOy1PSHWM4m1JAO0Jl7DNF-K7KXumthcwfY_tuPBC_5nuQi58O3QEg/exec";
+
+        form.addEventListener('submit', e => {
+            e.preventDefault();
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="animate-spin">↻</span> Processando sua Alma...';
+            statusMsg.textContent = "Conectando ao cérebro da IA...";
+
+            const formData = new FormData(form);
+
+            fetch(SCRIPT_URL, { method: 'POST', body: formData })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.result === 'success') {
+                        // SUCESSO REAL
+                        form.innerHTML = `
+                            <div class="text-center py-12">
+                                <div class="text-6xl mb-4">🧠</div>
+                                <h2 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600 mb-2">Recebido com Sucesso!</h2>
+                                <p class="text-gray-300">Nossa IA já começou a desenhar sua estratégia.</p>
+                                
+                                <div class="bg-gray-800/50 p-4 rounded-xl mt-6 border border-gray-700">
+                                    <p class="text-sm text-gray-400 mb-1">Prazo de Entrega:</p>
+                                    <p class="text-lg font-bold text-white">Até 24 horas</p>
+                                    <p class="text-xs text-gray-500 mt-2">Fique de olho no seu e-mail (Cheque SPAM/Promoções)</p>
+                                </div>
+
+                                <a href="https://instagram.com/dhawk.ai" target="_blank" class="block mt-8 text-sm text-purple-400 hover:text-purple-300">
+                                    Dúvidas? Chame no Instagram
+                                </a>
+                            </div>
+                        `;
+                    } else {
+                        throw new Error(data.error || 'Erro desconhecido');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error!', error);
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '❌ Erro no Envio';
+                    statusMsg.innerHTML = '<span class="text-red-400">Erro: ' + error.message + '</span>';
+                });
+        });
+    </script>
+</body>
+
+</html>

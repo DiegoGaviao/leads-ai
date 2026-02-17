@@ -1,0 +1,20 @@
+# 🤖 Regras de Projeto: LEADS AI (Estratégia + Python)
+
+**Contexto:** Marketing Karina (Sempre com o Método C.A.S.A.).
+**Linguagem:** Python (Backend/Scripts).
+
+## 🚨 AÇÃO OBRIGATÓRIA AO INICIAR NESTA PASTA
+A PRIMEIRA COISA que você precisa fazer ao receber um comando aqui é:
+
+1.  **Ler o Log do Projeto:**
+    - `06_PROJETOS_ATIVOS/LEADS_AI/LOGS/project_log.json`
+    - "Status: Script Pronto. Falta UI."
+
+2.  **Ler a Estratégia de Conteúdo (Se necessário):**
+    - `CONTEXTO/ESTRATEGIA_SUPREMA_IA.md` (A "persona" da Karina).
+    - "Entender o método C.A.S.A."
+
+3.  **Executar o Comando do Usuário** (já sabendo o contexto acima).
+
+## 📝 Ao Finalizar Tarefa
+- **Atualizar o Log:** Use o arquivo `LOGS/project_log.json` para adicionar o novo estado.

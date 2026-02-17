@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leads AI - Configuração Plano PRO 🚀</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: { primary: '#8B5CF6', secondary: '#EC4899', dark: '#0F172A' }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glass {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+    <!-- Meta Pixel Code -->
+    <script>
+        !function (f, b, e, v, n, t, s) {
+            if (f.fbq) return; n = f.fbq = function () {
+                n.callMethod ?
+                n.callMethod.apply(n, arguments) : n.queue.push(arguments)
+            };
+            if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = '2.0';
+            n.queue = []; t = b.createElement(e); t.async = !0;
+            t.src = v; s = b.getElementsByTagName(e)[0];
+            s.parentNode.insertBefore(t, s)
+        }(window, document, 'script',
+            'https://connect.facebook.net/en_US/fbevents.js');
+        fbq('init', '198494758545786');
+        fbq('track', 'PageView');
+        fbq('track', 'Purchase', { value: 29.90, currency: 'BRL' }); // Compra Confirmada (High Ticket)
+    </script>
+    <noscript><img height="1" width="1" style="display:none"
+            src="https://www.facebook.com/tr?id=198494758545786&ev=PageView&noscript=1" /></noscript>
+    <!-- End Meta Pixel Code -->
+</head>
+
+<body class="bg-dark text-white min-h-screen pb-20">
+
+    <header class="py-12 px-6 text-center">
+        <div
+            class="inline-block p-4 rounded-full bg-purple-900/30 text-purple-300 text-3xl mb-4 border border-purple-500/30">
+            🚀
+        </div>
+        <h1 class="text-2xl md:text-3xl font-bold mb-2">Leads AI: Plano PRO Confirmado</h1>
+        <p class="text-gray-400 text-sm">Você garantiu a análise completa de 10 posts + Roteiro Exclusivo.</p>
+    </header>
+
+    <main class="px-6 max-w-4xl mx-auto">
+        <div class="glass rounded-2xl p-8 shadow-2xl">
+
+            <form id="analysisForm" class="space-y-8">
+                <input type="hidden" name="plano" value="pro">
+
+                <!-- Contact Info -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-1">Seu Instagram</label>
+                        <input type="text" name="instagram" placeholder="@seu_perfil"
+                            class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white focus:ring-2 focus:ring-primary outline-none"
+                            required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-1">Seu WhatsApp</label>
+                        <input type="tel" name="whatsapp" placeholder="(11) 99999-9999"
+                            class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white focus:ring-2 focus:ring-primary outline-none"
+                            required>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-400 mb-1">E-mail para receber o
+                            Relatório</label>
+                        <input type="email" name="email" placeholder="voce@exemplo.com"
+                            class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white focus:ring-2 focus:ring-primary outline-none"
+                            required>
+                    </div>
+                </div>
+
+                <div
+                    class="bg-purple-900/20 border border-purple-500/30 p-4 rounded-lg flex flex-col gap-2 text-sm text-purple-200">
+                    <p><strong>Dica de Ouro:</strong> Escolha posts variados (Vídeos, Fotos, Carrosséis) para uma
+                        análise mais rica.</p>
+                </div>
+
+                <!-- Loop de Posts (Simplificado visualmente mas funcional) -->
+                <!-- Post 1 (Detalhado) -->
+                <div class="border border-gray-700 rounded-xl p-6 bg-gray-800/30">
+                    <h3 class="text-lg font-bold text-gray-300 mb-4 pb-2 border-b border-gray-700">POST #1</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="col-span-2"><input type="url" name="post1_link" placeholder="Link do Post"
+                                class="w-full bg-gray-900 border border-gray-700 rounded p-2 text-blue-300" required>
+                        </div>
+                        <div class="col-span-2"><input type="text" name="post1_tema" placeholder="Tema"
+                                class="w-full bg-gray-900 border border-gray-700 rounded p-2" required></div>
+                        <div class="grid grid-cols-4 col-span-2 gap-2">
+                            <input type="number" name="post1_views" placeholder="Views"
+                                class="bg-gray-900 border border-gray-700 rounded p-2" required>
+                            <input type="number" name="post1_likes" placeholder="Likes"
+                                class="bg-gray-900 border border-gray-700 rounded p-2" required>
+                            <input type="number" name="post1_saves" placeholder="Saves"
+                                class="bg-gray-900 border border-gray-700 rounded p-2 border-purple-500/30 font-bold"
+                                required>
+                            <input type="number" name="post1_comments" placeholder="Comm"
+                                class="bg-gray-900 border border-gray-700 rounded p-2" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Posts 2 a 10 (Compactos) -->
+                <div class="space-y-4">
+                    <!-- Script para gerar os inputs repetitivos e não poluir o arquivo -->
+                    <script>
+                        for (let i = 2; i <= 10; i++) {
+                            document.write(`
+                            <div class="border border-gray-700 rounded-xl p-4 bg-gray-800/20">
+                                <h3 class="text-sm font-bold text-gray-400 mb-2">POST #${i}</h3>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <input type="url" name="post${i}_link" placeholder="Link" class="w-full bg-gray-900 border border-gray-700 rounded p-2 text-xs text-blue-300">
+                                    <input type="text" name="post${i}_tema" placeholder="Tema" class="w-full bg-gray-900 border border-gray-700 rounded p-2 text-xs">
+                                </div>
+                                <div class="grid grid-cols-4 gap-2 mt-2">
+                                    <input type="number" name="post${i}_views" placeholder="Views" class="bg-gray-900 border border-gray-700 rounded p-2 text-xs">
+                                    <input type="number" name="post${i}_likes" placeholder="Likes" class="bg-gray-900 border border-gray-700 rounded p-2 text-xs">
+                                    <input type="number" name="post${i}_saves" placeholder="Saves" class="bg-gray-900 border border-gray-700 rounded p-2 text-xs border-purple-500/30">
+                                    <input type="number" name="post${i}_comments" placeholder="Comm" class="bg-gray-900 border border-gray-700 rounded p-2 text-xs">
+                                </div>
+                            </div>
+                            `);
+                        }
+                    </script>
+                </div>
+
+                <div class="pt-4">
+                    <button type="submit" id="submitBtn"
+                        class="w-full py-4 bg-gradient-to-r from-primary to-secondary rounded-xl font-bold text-lg shadow-lg hover:shadow-primary/40 transition-all flex justify-center items-center gap-2">
+                        <span>Enviar Dados PRO</span>
+                    </button>
+                    <p id="statusMsg" class="text-center text-xs text-gray-500 mt-4 h-4"></p>
+                </div>
+
+            </form>
+        </div>
+    </main>
+
+    <script>
+        const form = document.getElementById('analysisForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const statusMsg = document.getElementById('statusMsg');
+
+        // SUA URL DO APPS SCRIPT
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwCihYfvKP9bgl5iOy1PSHWM4m1JAO0Jl7DNF-K7KXumthcwfY_tuPBC_5nuQi58O3QEg/exec";
+
+        form.addEventListener('submit', e => {
+            e.preventDefault();
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="animate-spin">↻</span> Enviando 10 posts...';
+            statusMsg.textContent = "Conectando ao banco de dados...";
+
+            const formData = new FormData(form);
+
+            fetch(SCRIPT_URL, { method: 'POST', body: formData })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.result === 'success') {
+                        // SUCESSO REAL
+                        form.innerHTML = `
+                            <div class="text-center py-12">
+                                <div class="text-6xl mb-4">🎉</div>
+                                <h2 class="text-2xl font-bold text-green-400 mb-2">Dados Recebidos!</h2>
+                                <p class="text-gray-400">Tudo certo. Já estamos analisando.</p>
+                                <p class="text-sm text-gray-500 mt-4">Verifique seu e-mail em breve.</p>
+                            </div>
+                        `;
+                    } else {
+                        throw new Error(data.error || 'Erro desconhecido');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error!', error);
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '❌ Erro no Envio';
+                    statusMsg.innerHTML = '<span class="text-red-400">Erro: ' + error.message + '</span>';
+                });
+        });
+    </script>
+</body>
+
+</html>

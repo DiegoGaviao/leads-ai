@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leads AI - Descubra seu Padrão Oculto</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        primary: '#8B5CF6', // Purple
+                        secondary: '#EC4899', // Pink
+                        dark: '#0F172A', // Slate 900
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glass {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .gradient-text {
+            background: linear-gradient(90deg, #A855F7, #EC4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .glow:hover {
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
+        }
+    </style>
+    <!-- Meta Pixel Code -->
+    <script>
+        !function (f, b, e, v, n, t, s) {
+            if (f.fbq) return; n = f.fbq = function () {
+                n.callMethod ?
+                n.callMethod.apply(n, arguments) : n.queue.push(arguments)
+            };
+            if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = '2.0';
+            n.queue = []; t = b.createElement(e); t.async = !0;
+            t.src = v; s = b.getElementsByTagName(e)[0];
+            s.parentNode.insertBefore(t, s)
+        }(window, document, 'script',
+            'https://connect.facebook.net/en_US/fbevents.js');
+        fbq('init', '198494758545786');
+        fbq('track', 'PageView');
+        fbq('track', 'ViewContent'); // Indica que viu o produto
+    </script>
+    <noscript><img height="1" width="1" style="display:none"
+            src="https://www.facebook.com/tr?id=198494758545786&ev=PageView&noscript=1" /></noscript>
+    <!-- End Meta Pixel Code -->
+</head>
+
+<body class="bg-dark text-white min-h-screen">
+
+    <!-- Hero Section -->
+    <header class="pt-20 pb-12 px-6 text-center max-w-5xl mx-auto">
+        <span
+            class="px-3 py-1 rounded-full bg-purple-900/30 text-purple-300 text-xs font-bold tracking-wider uppercase border border-purple-500/20 mb-6 inline-block">
+            Leads AI para Instagram
+        </span>
+        <h1 class="text-5xl md:text-6xl font-extrabold mb-6 leading-tight">
+            Pare de tentar adivinhar.<br>
+            <span class="gradient-text">Descubra matematicamente</span> o que funciona pra você.
+        </h1>
+        <p class="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
+            Nós não comparamos você com os outros. Nós analisamos os <strong>seus próprios dados</strong> para revelar o
+            padrão exato que sua audiência já aprovou, mas você ainda não percebeu.
+        </p>
+    </header>
+
+    <!-- The Problem / Solution -->
+    <section class="max-w-4xl mx-auto px-6 mb-24 grid md:grid-cols-2 gap-12 items-center">
+        <div>
+            <h2 class="text-3xl font-bold mb-4">Você tem ouro nas mãos, <br>mas não está vendo.</h2>
+            <p class="text-gray-400 mb-6">
+                A cada post, o Instagram te dá pistas valiosas. Mas olhar apenas "curtidas" é como olhar apenas a capa
+                do livro.
+            </p>
+            <ul class="space-y-4 text-gray-300">
+                <li class="flex items-center gap-3">
+                    <span class="bg-red-500/20 text-red-400 p-1 rounded">❌</span>
+                    <span>Posts com muitas curtidas podem ter ZERO vendas.</span>
+                </li>
+                <li class="flex items-center gap-3">
+                    <span class="bg-green-500/20 text-green-400 p-1 rounded">✅</span>
+                    <span>Posts "flopados" podem ser os que mais trazem clientes fiéis.</span>
+                </li>
+                <li class="flex items-center gap-3">
+                    <span class="bg-purple-500/20 text-purple-400 p-1 rounded">🧠</span>
+                    <span>Nosso algoritmo cruza Views x Saves x Retenção pra te dizer a verdade.</span>
+                </li>
+            </ul>
+        </div>
+        <div class="glass p-8 rounded-2xl relative">
+            <div class="absolute top-0 right-0 bg-secondary w-20 h-20 blur-[80px] opacity-20 rounded-full"></div>
+            <div class="text-center">
+                <span class="text-6xl mb-4 block">💡</span>
+                <h3 class="text-xl font-bold mb-2">O Padrão Oculto</h3>
+                <p class="text-gray-400 text-sm">
+                    "Descobri que meus posts de texto simples convertiam 3x mais que os vídeos super produzidos. Parei
+                    de gastar tempo editando e comecei a escrever mais."
+                </p>
+                <div class="mt-4 pt-4 border-t border-gray-700">
+                    <p class="text-xs text-secondary font-bold uppercase tracking-widest">Resultado Real de Cliente</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="planos" class="max-w-5xl mx-auto px-6 mb-24">
+        <h2 class="text-center text-3xl font-bold mb-12">Escolha a Profundidade da sua Análise</h2>
+
+        <div class="grid md:grid-cols-2 gap-8 items-center">
+
+            <!-- Basic Plan -->
+            <div class="glass p-8 rounded-3xl border-gray-700 hover:border-gray-500 transition-all">
+                <h3 class="text-xl font-semibold text-gray-300 mb-2">Análise Rápida (Start)</h3>
+                <div class="flex items-baseline gap-1 mb-6">
+                    <span class="text-4xl font-bold">R$ 9,90</span>
+                </div>
+                <p class="text-gray-400 text-sm mb-8">
+                    Ideal para um diagnóstico inicial. Entenda o básico do que está acontecendo.
+                </p>
+                <ul class="space-y-4 mb-8 text-sm text-gray-300">
+                    <li class="flex gap-2"><span>📉</span> Análise de <strong>3 Posts</strong></li>
+                    <li class="flex gap-2"><span>📊</span> Cálculo do Índice de Autoridade</li>
+                    <li class="flex gap-2"><span>❌</span> Sem padrão estatístico confiável</li>
+                    <li class="flex gap-2"><span>❌</span> Sem sugestão de melhoria</li>
+                </ul>
+                <a href="https://mpago.la/31mTMpn"
+                    class="block w-full py-4 rounded-xl border border-gray-600 text-center font-bold hover:bg-gray-800 transition-colors">
+                    Escolher Básico
+                </a>
+            </div>
+
+            <!-- Pro Plan (Featured) -->
+            <div
+                class="glass p-8 rounded-3xl border-primary bg-primary/5 relative transform md:scale-105 shadow-2xl shadow-primary/10">
+                <div
+                    class="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-primary to-secondary px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wide shadow-lg">
+                    Recomendado 🚀
+                </div>
+                <h3 class="text-xl font-semibold text-white mb-2">Análise Profunda (Pro)</h3>
+                <div class="flex items-baseline gap-1 mb-6">
+                    <span
+                        class="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-purple-200">R$
+                        29,90</span>
+                </div>
+                <p class="text-gray-300 text-sm mb-8">
+                    Estatística pura. Com 10 posts, eliminamos a "sorte" e encontramos o padrão de ouro do seu perfil.
+                </p>
+                <ul class="space-y-4 mb-8 text-sm text-white">
+                    <li class="flex gap-2 items-center">
+                        <span class="bg-green-500/20 text-green-400 p-1 rounded-full text-xs">✓</span>
+                        <strong>Análise de 10 Posts</strong> (Alta Confiabilidade)
+                    </li>
+                    <li class="flex gap-2 items-center">
+                        <span class="bg-green-500/20 text-green-400 p-1 rounded-full text-xs">✓</span>
+                        <strong>Gráfico de "Ouro vs Lixo"</strong> de Conteúdo
+                    </li>
+                    <li class="flex gap-2 items-center">
+                        <span class="bg-green-500/20 text-green-400 p-1 rounded-full text-xs">✓</span>
+                        <strong>Raio-X de Legenda e Capa</strong> (O que funcionou visualmente)
+                    </li>
+                    <li class="flex gap-2 items-center">
+                        <span class="bg-green-500/20 text-green-400 p-1 rounded-full text-xs">✓</span>
+                        <strong>Inclui 1 Roteiro Otimizado</strong> (Baseado nos seus dados)
+                    </li>
+                </ul>
+                <a href="https://mpago.la/2sM8erQ"
+                    class="block w-full py-4 rounded-xl bg-gradient-to-r from-primary to-secondary text-center font-bold shadow-lg glow transition-transform transform active:scale-95">
+                    Quero o Plano Completo (c/ Roteiro)
+                </a>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="max-w-3xl mx-auto px-6 pb-24">
+        <h2 class="text-2xl font-bold mb-8 text-center text-gray-300">Dúvidas Comuns</h2>
+        <div class="space-y-4">
+            <details class="glass rounded-xl p-4 group">
+                <summary
+                    class="font-semibold cursor-pointer list-none flex justify-between items-center text-gray-300 group-hover:text-white">
+                    Como funciona a entrega?
+                    <span class="transition-transform group-open:rotate-180">▼</span>
+                </summary>
+                <p class="text-gray-400 mt-4 text-sm leading-relaxed">
+                    Após o pagamento, você preencherá um formulário rápido onde poderá enviar os prints dos seus
+                    Insights ou os links dos seus posts. Nossa inteligência processa esses dados e te envia um relatório
+                    PDF detalhado em até 24h úteis.
+                </p>
+            </details>
+            <details class="glass rounded-xl p-4 group">
+                <summary
+                    class="font-semibold cursor-pointer list-none flex justify-between items-center text-gray-300 group-hover:text-white">
+                    Por que analisar 10 posts é melhor que 3?
+                    <span class="transition-transform group-open:rotate-180">▼</span>
+                </summary>
+                <p class="text-gray-400 mt-4 text-sm leading-relaxed">
+                    Estatística. Com 3 posts, um resultado pode ter sido sorte ou acaso. Com 10 posts, conseguimos ver a
+                    *tendência real* do seu conteúdo, isolando variáveis como "horário de postagem" e "tretas
+                    momentâneas", focando na qualidade real do seu material.
+                </p>
+            </details>
+            <details class="glass rounded-xl p-4 group">
+                <summary
+                    class="font-semibold cursor-pointer list-none flex justify-between items-center text-gray-300 group-hover:text-white">
+                    É um robô ou um humano?
+                    <span class="transition-transform group-open:rotate-180">▼</span>
+                </summary>
+                <p class="text-gray-400 mt-4 text-sm leading-relaxed">
+                    O melhor dos dois mundos. Usamos algoritmos de IA para processar os dados brutos, mas a estratégia
+                    final e as sugestões de roteiro passam pela curadoria de um Estrategista Digital experiente.
+                </p>
+            </details>
+        </div>
+    </section>
+
+    <footer class="text-center py-8 text-gray-600 text-xs border-t border-gray-800">
+        <p>Copyright © 2026 Leads AI. Todos os direitos reservados.</p>
+    </footer>
+
+</body>
+
+</html>

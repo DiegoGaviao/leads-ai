@@ -1,0 +1,39 @@
+services:
+  # ---------------------------------------------------------------------------
+  # 🌐 Service 1: Backend (Leads AI Pilot - Python/FastAPI)
+  # ---------------------------------------------------------------------------
+  - type: web
+    name: leads-ai-backend
+    env: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: META_APP_ID
+        sync: false
+      - key: META_APP_SECRET
+        sync: false
+      - key: PYTHON_VERSION
+        value: 3.10.0
+
+  # ---------------------------------------------------------------------------
+  # 🌐 Service 2: Frontend (Leads AI Pilot - React/Vite)
+  # ---------------------------------------------------------------------------
+  - type: static
+    name: leads-ai-frontend
+    env: static
+    rootDir: web_v2
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: leads-ai-backend
+          property: url

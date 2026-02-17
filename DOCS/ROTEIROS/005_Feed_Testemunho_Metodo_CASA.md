@@ -1,0 +1,10 @@
+# 005 - QUANDO A CASA INTERIOR ENCONTRA ORDEM: UM DEPOIMENTO
+**Tipo:** FEED
+**Tema Central:** Um testemunho em primeira pessoa (ou de uma cliente, com permissão) sobre os resultados práticos do método CASA, focando no retorno do prazer na vida cotidiana.
+**Estrutura Narrativa:**
+1.  **O Antes:** "Antes do CASA, minha vida era uma lista de tarefas. Acordar, levar na escola, trabalhar, buscar, fazer jantar, dormir. O prazer? Era algo que eu via em revistas. A leveza era um conceito abstrato. Eu estava funcionando, mas não estava vivendo. Minha casa interior era um armário entulhado de 'deverias' e expectativas alheias."
+2.  **O Processo:** "O método me guiou, passo a passo, não para jogar tudo fora, mas para ordenar. O 'C' de Consciência me fez enxergar os padrões. O 'A' de Aceitação me permitiu largar a guerra contra a realidade. O 'S' de Significado me ajudou a encontrar o fio de propósito até nas tarefas mais repetitivas. O 'A' de Ação me deu ferramentas pequenas e concretas."
+3.  **O Depois/Resultado:** "Hoje, fazer o jantar pode ser um momento de criatividade, não só uma obrigação. A bagunça dos brinquedos me lembra a vida que habita esta casa, não o meu fracasso como dona de casa. Encontro prazer no café quente pela manhã, no abraço demorado, no silêncio da madrugada. Não porque minha vida mudou magicamente, mas porque eu mudei o jeito de habitar a vida que já tenho. Reconciliei-me com minha história e construí, de fato, uma mulher mais inteira."
+**Chamada para Ação Suave:** "Se você se sente perdida na sua própria rotina, distante do prazer e da leveza, e acredita que pode existir um caminho de volta para si mesma, o método CASA pode ser para você. Estou abrindo uma nova turma de acompanhamento em grupo no mês que vem. As vagas são limitadas para garantir a profundidade do processo. Clique no link na minha bio para ser a primeira a saber quando as inscrições abrirem."
+**Pergunta Final:** "O que seria 'viver com prazer' na sua rotina atual?"
+**Hashtags:** #metodocasa #depoimento #mulherinteira #encontrardeprazer #saudemental #transformacao
