@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useOnboardingStore } from '../data/onboardingStore';
 import { supabase } from '../lib/supabaseClient';
 import { ResultsView } from '../components/ResultsView';
@@ -6,18 +7,46 @@ import { Loader2, AlertCircle, Mail } from 'lucide-react';
 
 export default function StrategyView() {
     const { email } = useOnboardingStore();
+    const location = useLocation();
+    const params = new URLSearchParams(location.search);
+    const strategyIdParam = params.get('strategy_id');
     const [strategy, setStrategy] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        if (!email) {
-            setLoading(false);
-            setError("E-mail não identificado. Por favor, faça o onboarding novamente.");
-            return;
-        }
-
         const fetchStrategy = async () => {
+            // se strategy_id foi passado na URL, buscamos diretamente pela strategy.id
+            if (strategyIdParam) {
+                try {
+                    const { data: strat, error: stratErr } = await supabase
+                        .from('strategies')
+                        .select('content_json')
+                        .eq('id', strategyIdParam)
+                        .maybeSingle();
+
+                    if (stratErr) throw stratErr;
+                    if (strat) {
+                        setStrategy(strat.content_json);
+                    } else {
+                        setStrategy(null);
+                    }
+                } catch (err: any) {
+                    console.error(err);
+                    setError(err.message);
+                } finally {
+                    setLoading(false);
+                }
+                return;
+            }
+
+            if (!email) {
+                setLoading(false);
+                setError("E-mail não identificado. Por favor, faça o onboarding novamente.");
+                return;
+            }
+
+            try {
             try {
                 // 1. Buscar o ID do cliente pelo e-mail
                 const { data: client, error: clientErr } = await supabase

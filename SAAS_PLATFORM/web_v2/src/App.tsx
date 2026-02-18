@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import { LandingPage } from './components/LandingPage';
 import { Dashboard } from './components/Dashboard';
 
@@ -10,6 +11,17 @@ import StrategyView from './pages/StrategyView';
 
 function App() {
   const navigate = useNavigate();
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const sid = params.get('strategy_id');
+      if (sid && window.location.pathname !== '/strategy') {
+        navigate(`/strategy?strategy_id=${encodeURIComponent(sid)}`);
+      }
+    } catch (err) {
+      // ignore
+    }
+  }, [navigate]);
   return (
     <div className="min-h-screen bg-background text-foreground selection:bg-primary/30">
       <Routes>
