@@ -16,7 +16,7 @@ export function LandingPage({ onStart }: LandingPageProps) {
                     </div>
                     <div className="flex flex-col">
                         <span className="text-xl font-bold tracking-tight">Leads AI</span>
-                        <span className="text-[10px] text-muted-foreground font-mono leading-none">v2.0.2-final</span>
+                        <span className="text-[10px] text-muted-foreground font-mono leading-none">v2.0.3-STABLE</span>
                     </div>
                 </div>
                 <button onClick={onStart} className="btn-secondary hidden md:block">
