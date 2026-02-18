@@ -17,44 +17,25 @@ app = FastAPI(
     version="2.1.0"
 )
 
+@app.get("/")
+async def root():
+    return {
+        "status": "online",
+        "version": "2.1.2",
+        "api": "Leads AI V2 Backend"
+    }
+
 # Includes Router do Auth
 app.include_router(auth.router)
 
 # CORS
-origins = ["*"]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Modelos Pydantic (Entrada de Dados)
-class ToneOfVoice(BaseModel):
-    nao_sou: str
-    sou: str
-
-class PostData(BaseModel):
-    tema: str
-    views: Union[str, int]
-    likes: Union[str, int] = 0
-    saves: Union[str, int] = 0
-    comments: Union[str, int] = 0
-
-class OnboardingRequest(BaseModel):
-    instagram: str
-    email: str
-    missao: str
-    inimigo: str
-    dor_cliente: str
-    metodo_nome: str
-    # tone_voice agora pode ser inferido ou passado simples
-    posts: List[PostData]
-
-@app.get("/")
-def home():
-    return {"status": "online", "db": "supabase-ready", "project": "Leads AI V2"}
 
 @app.post("/analyze")
 async def analyze_strategy(req: OnboardingRequest, authorization: Optional[str] = Header(None)):

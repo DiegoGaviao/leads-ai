@@ -21,7 +21,10 @@ export interface OnboardingState {
         link: string;
         views: string;
         likes: string;
-        comments?: string;
+        comments: string;
+        shares: string;
+        saves: string;
+        conversions: string;
     }>;
 
     // Step 4: Auth (Opcional por enquanto)

@@ -12,6 +12,8 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.96.0",
     "clsx": "^2.1.1",
+    "esbuild": "^0.27.3",
+    "fdir": "^6.5.0",
     "framer-motion": "^12.34.1",
     "ldrs": "^1.1.9",
     "lucide-react": "^0.574.0",

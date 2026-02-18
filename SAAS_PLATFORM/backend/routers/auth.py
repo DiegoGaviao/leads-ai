@@ -21,7 +21,10 @@ class PostEntry(BaseModel):
     link: str
     views: str
     likes: str
-    comments: Optional[str] = None
+    comments: Optional[str] = "0"
+    shares: Optional[str] = "0"
+    saves: Optional[str] = "0"
+    conversions: Optional[str] = "0"
 
 class OnboardingCompleteRequest(BaseModel):
     email: str
@@ -114,9 +117,12 @@ async def complete_onboarding(data: OnboardingCompleteRequest, background_tasks:
                     db_posts.append({
                         "brand_id": brand_id,
                         "permalink": p.link,
-                        "views": int(p.views) if p.views.isdigit() else 0,
-                        "likes": int(p.likes) if p.likes.isdigit() else 0,
+                        "views": int(p.views) if p.views and p.views.isdigit() else 0,
+                        "likes": int(p.likes) if p.likes and p.likes.isdigit() else 0,
                         "comments": int(p.comments) if p.comments and p.comments.isdigit() else 0,
+                        "shares": int(p.shares) if p.shares and p.shares.isdigit() else 0,
+                        "saves": int(p.saves) if p.saves and p.saves.isdigit() else 0,
+                        "conversions": int(p.conversions) if p.conversions and p.conversions.isdigit() else 0,
                         "external_id": f"manual_{datetime.now().timestamp()}_{p.link[:20]}"
                     })
                 

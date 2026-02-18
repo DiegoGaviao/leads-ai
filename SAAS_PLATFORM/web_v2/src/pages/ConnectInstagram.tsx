@@ -13,13 +13,13 @@ export default function ManualDataEntryPage() {
     // Limite baseado no plano
     const MAX_POSTS = plan === 'pro' ? 5 : 3;
 
-    const [posts, setLocalPosts] = useState(savedPosts.length > 0 ? savedPosts.slice(0, MAX_POSTS) : [{ link: '', views: '', likes: '', comments: '' }]);
+    const [posts, setLocalPosts] = useState(savedPosts.length > 0 ? savedPosts.slice(0, MAX_POSTS) : [{ link: '', views: '', likes: '', comments: '', shares: '', saves: '', conversions: '' }]);
     const [isSaving, setIsSaving] = useState(false);
     const [isFinished, setIsFinished] = useState(false);
 
     const addPost = () => {
         if (posts.length < MAX_POSTS) {
-            setLocalPosts([...posts, { link: '', views: '', likes: '', comments: '' }]);
+            setLocalPosts([...posts, { link: '', views: '', likes: '', comments: '', shares: '', saves: '', conversions: '' }]);
         }
     };
 
@@ -93,13 +93,13 @@ export default function ManualDataEntryPage() {
                 <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold uppercase tracking-widest mb-6">
                     <BarChart2 className="w-4 h-4" /> Passo Final: Performance
                 </div>
-                <h1 className="text-4xl font-extrabold mb-4 tracking-tight">Quais posts queremos analisar?</h1>
-                <p className="text-slate-400 text-lg">
-                    Adicione os links dos posts que você quer que nosso Robô analise para extrair o DNA do seu sucesso.
+                <h1 className="text-4xl font-extrabold mb-4 tracking-tight text-white">Quais posts queremos analisar?</h1>
+                <p className="text-slate-400 text-lg leading-relaxed">
+                    Adicione os links e as métricas dos posts que você quer que nosso Robô analise para extrair o DNA do seu sucesso.
                 </p>
             </div>
 
-            <div className="w-full max-w-3xl space-y-6">
+            <div className="w-full max-w-3xl space-y-8">
                 <AnimatePresence>
                     {posts.map((post, index) => (
                         <motion.div
@@ -107,65 +107,95 @@ export default function ManualDataEntryPage() {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.95 }}
-                            className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 relative group overflow-hidden"
+                            className="bg-slate-900/50 border border-slate-800 rounded-3xl p-8 relative group overflow-hidden shadow-xl"
                         >
-                            <div className="absolute top-0 left-0 w-1 h-full bg-blue-500/50" />
+                            <div className="absolute top-0 left-0 w-1.5 h-full bg-indigo-500/50" />
 
-                            <div className="flex justify-between items-center mb-6">
+                            <div className="flex justify-between items-center mb-8">
                                 <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">Análise #{index + 1}</span>
                                 {posts.length > 1 && (
                                     <button
                                         onClick={() => removePost(index)}
-                                        className="p-2 hover:bg-red-500/10 text-slate-500 hover:text-red-400 rounded-lg transition-colors"
+                                        className="p-2 hover:bg-red-500/10 text-slate-500 hover:text-red-400 rounded-xl transition-all"
                                     >
-                                        <Minus className="w-4 h-4" />
+                                        <Minus className="w-5 h-5" />
                                     </button>
                                 )}
                             </div>
 
-                            <div className="space-y-4">
+                            <div className="space-y-6">
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Link do Post</label>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 ml-1">Link do Post</label>
                                     <div className="relative">
-                                        <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
+                                        <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-600" />
                                         <input
                                             placeholder="https://www.instagram.com/p/..."
                                             value={post.link}
                                             onChange={(e) => updatePost(index, 'link', e.target.value)}
-                                            className="w-full pl-12 pr-4 py-3 bg-slate-950 border border-slate-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder-slate-700"
+                                            className="w-full pl-12 pr-5 py-4 bg-slate-950 border border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder-slate-800"
                                         />
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
                                     <div>
-                                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Visualizações</label>
+                                        <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1 text-center">Visualizações</label>
                                         <input
                                             type="number"
                                             placeholder="Ex: 5000"
                                             value={post.views}
                                             onChange={(e) => updatePost(index, 'views', e.target.value)}
-                                            className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                                            className="w-full px-5 py-4 bg-slate-950/80 border border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-center"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Curtidas</label>
+                                        <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1 text-center">Curtidas</label>
                                         <input
                                             type="number"
                                             placeholder="Ex: 250"
                                             value={post.likes}
                                             onChange={(e) => updatePost(index, 'likes', e.target.value)}
-                                            className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                                            className="w-full px-5 py-4 bg-slate-950/80 border border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-center"
                                         />
                                     </div>
-                                    <div className="col-span-2 md:col-span-1">
-                                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Vendas/Leads (Opcional)</label>
+                                    <div>
+                                        <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1 text-center">Comentários</label>
+                                        <input
+                                            type="number"
+                                            placeholder="Ex: 45"
+                                            value={post.comments}
+                                            onChange={(e) => updatePost(index, 'comments', e.target.value)}
+                                            className="w-full px-5 py-4 bg-slate-950/80 border border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-center"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1 text-center">Compartilhamentos</label>
+                                        <input
+                                            type="number"
+                                            placeholder="Ex: 30"
+                                            value={post.shares}
+                                            onChange={(e) => updatePost(index, 'shares', e.target.value)}
+                                            className="w-full px-5 py-4 bg-slate-950/80 border border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-center"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1 text-center">Salvamentos</label>
+                                        <input
+                                            type="number"
+                                            placeholder="Ex: 120"
+                                            value={post.saves}
+                                            onChange={(e) => updatePost(index, 'saves', e.target.value)}
+                                            className="w-full px-5 py-4 bg-slate-950/80 border border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-center"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-bold text-green-500/80 uppercase tracking-widest mb-2 ml-1 text-center">Vendas/Leads</label>
                                         <input
                                             type="number"
                                             placeholder="Ex: 12"
-                                            value={post.comments} // Usando comments como proxy para 'leads/sales' na UI por enquanto
-                                            onChange={(e) => updatePost(index, 'comments', e.target.value)}
-                                            className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                                            value={post.conversions}
+                                            onChange={(e) => updatePost(index, 'conversions', e.target.value)}
+                                            className="w-full px-5 py-4 bg-green-500/5 border border-green-500/10 rounded-2xl focus:ring-2 focus:ring-green-500 outline-none transition-all text-center placeholder-green-900/50"
                                         />
                                     </div>
                                 </div>

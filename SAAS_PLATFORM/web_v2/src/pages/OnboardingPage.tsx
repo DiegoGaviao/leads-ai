@@ -130,77 +130,75 @@ export default function OnboardingPage() {
                 )}
 
                 {step === 2 && (
-                    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <div className="text-center mb-8">
-                            <div className="w-16 h-16 bg-purple-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-purple-500/20">
-                                <Target className="w-8 h-8 text-purple-400" />
+                    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                        <div className="text-center mb-10">
+                            <div className="w-20 h-20 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-white/10 shadow-xl">
+                                <Target className="w-10 h-10 text-indigo-400" />
                             </div>
-                            <h1 className="text-2xl font-bold text-white mb-2">DNA da Marca</h1>
-                            <p className="text-slate-400">Preencha o questionário para a ferramenta ficar a sua cara.</p>
+                            <h1 className="text-3xl font-extrabold text-white mb-3 tracking-tight">Arquétipo & DNA</h1>
+                            <p className="text-slate-400 max-w-md mx-auto leading-relaxed">Defina a essência da sua marca para que nosso robô aprenda a falar o seu dialeto.</p>
                         </div>
 
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-bold text-slate-300 mb-2">Quem é o Cliente dos Sonhos?</label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="space-y-2">
+                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Cliente dos Sonhos</label>
                                 <input
                                     name="dreamClient"
                                     value={formData.dreamClient} onChange={handleChange}
-                                    placeholder="Empresarios que pensam fora da caixa..."
-                                    className="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all"
+                                    placeholder="Ex: Empresários que pensam fora da caixa..."
+                                    className="w-full px-5 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder-slate-700"
                                 />
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-bold text-slate-300 mb-2">Qual a DOR (Inferno)?</label>
-                                    <input
-                                        name="pain"
-                                        value={formData.pain} onChange={handleChange}
-                                        placeholder="Ex: Quem e reacionario"
-                                        className="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-bold text-slate-300 mb-2">Qual o SONHO (Céu)?</label>
-                                    <input
-                                        name="dream"
-                                        value={formData.dream} onChange={handleChange}
-                                        placeholder="Ex: Renda passiva e tranquilidade"
-                                        className="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                    />
-                                </div>
+                            <div className="space-y-2">
+                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Nome do Método/Empresa</label>
+                                <input
+                                    name="method"
+                                    value={formData.method} onChange={handleChange}
+                                    placeholder="Ex: Método Escala 10x"
+                                    className="w-full px-5 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder-slate-700"
+                                />
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-bold text-slate-300 mb-2">Quem é o Inimigo Comum?</label>
+                            <div className="space-y-2">
+                                <label className="block text-xs font-bold text-red-500/80 uppercase tracking-widest ml-1">O Inferno (A Dor maior)</label>
+                                <input
+                                    name="pain"
+                                    value={formData.pain} onChange={handleChange}
+                                    placeholder="O que tira o sono dele?"
+                                    className="w-full px-5 py-4 bg-red-500/5 border border-red-500/10 rounded-2xl text-white focus:ring-2 focus:ring-red-500 outline-none transition-all placeholder-slate-700"
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="block text-xs font-bold text-green-500/80 uppercase tracking-widest ml-1">O Céu (O Sonho)</label>
+                                <input
+                                    name="dream"
+                                    value={formData.dream} onChange={handleChange}
+                                    placeholder="Onde ele quer chegar?"
+                                    className="w-full px-5 py-4 bg-green-500/5 border border-green-500/10 rounded-2xl text-white focus:ring-2 focus:ring-green-500 outline-none transition-all placeholder-slate-700"
+                                />
+                            </div>
+
+                            <div className="md:col-span-2 space-y-2">
+                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Missão & Promessa (O que você resolve?)</label>
                                 <textarea
+                                    name="mission"
+                                    rows={2}
+                                    value={formData.mission} onChange={handleChange}
+                                    placeholder="Transformo X em Y através da tecnologia Z..."
+                                    className="w-full px-5 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder-slate-700 resize-none"
+                                />
+                            </div>
+
+                            <div className="md:col-span-2 space-y-2">
+                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Inimigo Comum (Contra quem lutamos?)</label>
+                                <input
                                     name="enemy"
                                     value={formData.enemy} onChange={handleChange}
-                                    rows={2}
-                                    placeholder="Falta de incentivo do governo, taxas..."
-                                    className="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all"
+                                    placeholder="Ex: O algoritmo, as taxas, os gurus mentirosos..."
+                                    className="w-full px-5 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder-slate-700"
                                 />
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-bold text-slate-300 mb-2">Nome do Método/Produto</label>
-                                    <input
-                                        name="method"
-                                        value={formData.method} onChange={handleChange}
-                                        placeholder="AI para todos"
-                                        className="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-bold text-slate-300 mb-2">Sua Missão (Resumo)</label>
-                                    <input
-                                        name="mission"
-                                        value={formData.mission} onChange={handleChange}
-                                        placeholder="Mostrar que todos precisam de AI"
-                                        className="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                    />
-                                </div>
                             </div>
                         </div>
                     </div>

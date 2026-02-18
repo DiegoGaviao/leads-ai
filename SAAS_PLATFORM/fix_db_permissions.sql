@@ -1,26 +1,17 @@
-
--- 🛠️ CORREÇÃO DEFINITIVA DO BANCO (LEADS AI)
--- Este script resolve: RLS, User_ID obrigatório e falta de constraint única.
-
--- 1. Desabilitar RLS para permitir onboarding sem login (MVP/Free)
-ALTER TABLE leads_ai_brands DISABLE ROW LEVEL SECURITY;
-ALTER TABLE leads_ai_posts DISABLE ROW LEVEL SECURITY;
-ALTER TABLE leads_ai_strategies DISABLE ROW LEVEL SECURITY;
-
--- 2. Tornar o user_id opcional (estava obrigatório e bloqueando inserts)
+-- 🛠️ CORREÇÃO URGENTE: Permitir salvar marcas sem exigir login prévio (user_id opcional)
 ALTER TABLE leads_ai_brands ALTER COLUMN user_id DROP NOT NULL;
 
--- 3. Adicionar constraint única para o instagram_handle (Necessário para o Upsert funcionar)
--- Primeiro remove se já existir para não dar erro
-ALTER TABLE leads_ai_brands DROP CONSTRAINT IF EXISTS leads_ai_brands_instagram_handle_key;
-ALTER TABLE leads_ai_brands ADD CONSTRAINT leads_ai_brands_instagram_handle_key UNIQUE (instagram_handle);
+-- 🔓 LIBERAR RLS: Permitir que qualquer um insira dados (Onboarding Livre)
+DROP POLICY IF EXISTS "Users can insert their own brand" ON leads_ai_brands;
+CREATE POLICY "Allow anonymous inserts" ON leads_ai_brands FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow public select" ON leads_ai_brands FOR SELECT USING (true);
 
--- 4. Criar a tabela de estratégias se ela estiver com nome diferente (Sincronização com o Worker)
-CREATE TABLE IF NOT EXISTS leads_ai_strategies (
-  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-  brand_id uuid REFERENCES leads_ai_brands(id) ON DELETE CASCADE,
-  persona_markdown TEXT,
-  strategy_markdown TEXT,
-  scripts_json JSONB,
-  created_at TIMESTAMPTZ DEFAULT now()
-);
+DROP POLICY IF EXISTS "Users can manage their own posts via brand" ON leads_ai_posts;
+CREATE POLICY "Allow anonymous post inserts" ON leads_ai_posts FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow public post select" ON leads_ai_posts FOR SELECT USING (true);
+
+-- 📊 EXPANSÃO DE MÉTRICAS: Adicionar colunas faltantes para posts manuais
+ALTER TABLE leads_ai_posts ADD COLUMN IF NOT EXISTS shares INTEGER DEFAULT 0;
+ALTER TABLE leads_ai_posts ADD COLUMN IF NOT EXISTS conversions INTEGER DEFAULT 0;
+ALTER TABLE leads_ai_posts ADD COLUMN IF NOT EXISTS comments INTEGER DEFAULT 0;
+ALTER TABLE leads_ai_posts ADD COLUMN IF NOT EXISTS saves INTEGER DEFAULT 0; -- Garantir que existe
