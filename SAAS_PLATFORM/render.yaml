@@ -37,3 +37,24 @@ services:
           type: web
           name: leads-ai-backend
           property: url
+
+  # ---------------------------------------------------------------------------
+  # ⚙️ Service 3: AI Worker (Background Processing)
+  # ---------------------------------------------------------------------------
+  - type: worker
+    name: leads-ai-worker
+    env: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: python worker.py
+    envVars:
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: DEEPSEEK_API_KEY
+        sync: false
+    # O Worker não tem porta exposta, ele apenas observa o banco.
+

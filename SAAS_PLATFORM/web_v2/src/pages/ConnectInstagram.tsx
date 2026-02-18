@@ -46,7 +46,6 @@ export default function ConnectInstagramPage() {
                 <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400 mb-4">
                     Conexão Segura
                 </h1>
-                {instagram && <p className="text-slate-500 mb-2">Para: @{instagram}</p>}
 
                 <p className="text-slate-400 mb-8 leading-relaxed">
                     Para que nosso Robô possa ler seus posts e entender o que performa, precisamos de sua permissão oficial.

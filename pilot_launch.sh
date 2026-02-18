@@ -8,7 +8,7 @@ NC='\033[0m' # No Color
 echo -e "${GREEN}🚀 Iniciando Script de Push para Leads AI V2...${NC}"
 
 # Define o diretório do projeto
-PROJECT_DIR="/Users/diegorufino/Desktop/DEV/2026/02 - Plano 2026/06_PROJETOS_ATIVOS/LEADS_AI"
+PROJECT_DIR="/Users/diegorufino/Desktop/DEV/2026/02 - Plano 2026/06_PROJETOS_ATIVOS/LEADS_AI 2"
 REPO_URL="https://github.com/DiegoGaviao/leads-ai-v2.git"
 
 # Navega para o diretório

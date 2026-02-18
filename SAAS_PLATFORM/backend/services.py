@@ -39,38 +39,74 @@ class AICouncilService:
 
     @staticmethod
     def generate_strategy(briefing: dict, insights: str, raw_data: str):
-        """Gera a estrutura final JSON contendo Persona, Estratégia e Roteiros."""
-        prompt = f"""
-        Você é o Gerente de Conteúdo Sênior da Agência Leads AI. 
-        Sua missão é criar uma Identidade de Marca PROFUNDA e ÚNICA.
+        """Gera a estrutura final JSON contendo Persona, Estratégia e Roteiros usando o NOVO BRIEFING RICO."""
+        
+        system_prompt = """
+        Você é o Diretor Criativo da Leads AI. Sua missão é criar uma Identidade de Marca PROFUNDA, ÚNICA e MATEMATICAMENTE validada.
+        Não use clichês de marketing. Use psicologia comportamental e dados.
+        """
 
-        CONTEXTO DO CLIENTE:
-        Missão: {briefing.get('missao')}
-        Inimigo: {briefing.get('inimigo')}
-        Dor do Cliente: {briefing.get('dor_cliente')}
-        Método: {briefing.get('metodo_nome')}
+        user_prompt = f"""
+        CONTEXTO DO CLIENTE (DNA DA MARCA):
+        1. MISSÃO: {briefing.get('mission')}
+        2. TOM DE VOZ: {briefing.get('tone_voice')} (Isso dita como você escreve tudo).
+        3. AUTORIDADE: {briefing.get('authority')} (Use isso para gerar credibilidade).
+        4. GRANDE PROMESSA (O CÉU): {briefing.get('big_promise')}
+        5. O INIMIGO COMUM: {briefing.get('enemy')}
+        6. A DOR PROFUNDA (O INFERNO): {briefing.get('pain_point')}
+        7. O SONHO DO CLIENTE: {briefing.get('desire_point')}
+        8. PRODUTO/MÉTODO: {briefing.get('method_name')}
+        9. CLIENTE IDEAL: {briefing.get('dream_client')}
 
-        INSIGHTS DOS DADOS REAIS:
+        INSIGHTS DOS DADOS REAIS (O QUE JÁ FUNCIONA):
         {insights}
 
-        DADOS BRUTOS (AMOSTRA):
+        DADOS BRUTOS (AMOSTRA DE POSTS ANTERIORES):
         {raw_data[:2000]}
 
         ---
-        ESTRUTURA OBRIGATÓRIA (JSON):
-        1. "persona": Markdown rico descrevendo o Especialista, Tom de Voz (É vs Não É) e Dores.
-        2. "estrategia": Markdown descrevendo o Método Único, Regras de Ouro e Pilares.
-        3. "roteiros": Lista de 5 objetos {{ "index": 1, "tema": "...", "visual": "...", "texto": "..." }}.
-
-        RESPOSTA APENAS JSON VÁLIDO.
+        TAREFA:
+        Gere um JSON estritamente válido com a seguinte estrutura:
+        {{
+            "persona": "Markdown rico detalhando a Persona. Use o Tom de Voz definido. Crie uma seção 'O Que Não Somos' para diferenciar.",
+            "estrategia": "Markdown explicando o 'Angulo Único' dessa marca baseada nos dados. Defina 3 Pilares de Conteúdo.",
+            "roteiros": [
+                {{
+                    "index": 1,
+                    "tema": "Título chamativo (Hook)",
+                    "visual": "Descrição da cena ou imagem",
+                    "texto": "Roteiro completo FALADO (Use o tom de voz: {briefing.get('tone_voice')})",
+                    "legenda": "Legenda para o post"
+                }},
+                ... (Gere 5 roteiros variados: 1 de Quebra de Padrão, 1 de Autoridade, 1 de Conexão/História, 1 Técnico/Dica, 1 Venda Indireta)
+            ]
+        }}
         """
+
         try:
+            # Tenta primeiro com DeepSeek (Mais Inteligente para Raciocínio)
             response = deepseek_client.chat.completions.create(
                 model="deepseek-chat",
-                messages=[{"role": "user", "content": prompt}],
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
                 response_format={"type": "json_object"}
             )
             return json.loads(response.choices[0].message.content)
         except Exception as e:
-            logging.error(f"Erro DeepSeek Strategy: {e}")
-            raise e
+            logging.warning(f"DeepSeek falhou, tentando OpenAI GPT-4o-mini... Erro: {e}")
+            # Fallback para OpenAI (Mais Estável)
+            try:
+                response = openai_client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt}
+                    ],
+                    response_format={"type": "json_object"}
+                )
+                return json.loads(response.choices[0].message.content)
+            except Exception as e2:
+                logging.error(f"Erro Crítico na Geração de Estratégia: {e2}")
+                raise e2

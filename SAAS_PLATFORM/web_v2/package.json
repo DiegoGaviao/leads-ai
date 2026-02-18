@@ -10,10 +10,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.96.0",
     "clsx": "^2.1.1",
     "framer-motion": "^12.34.1",
     "ldrs": "^1.1.9",
     "lucide-react": "^0.574.0",
+    "nanoid": "^5.1.6",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-markdown": "^10.1.0",

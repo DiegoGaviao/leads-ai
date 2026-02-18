@@ -9,7 +9,7 @@ import CallbackPage from './pages/CallbackPage';
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/projetos/leads-ai">
       <div className="min-h-screen bg-background text-foreground selection:bg-primary/30">
 
         <Routes>

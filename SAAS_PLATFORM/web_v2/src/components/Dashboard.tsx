@@ -3,8 +3,9 @@ import { motion } from 'framer-motion'
 import { Plus, Minus, Send } from 'lucide-react'
 
 interface DashboardProps {
-    onSubmit?: (data: any) => void
+    onSubmit: (data: any) => void
 }
+
 
 export function Dashboard({ onSubmit }: DashboardProps) {
     // const [step, setStep] = useState(1)
@@ -160,9 +161,10 @@ export function Dashboard({ onSubmit }: DashboardProps) {
 
                 <button
                     onClick={() => {
-                        if (onSubmit) {
-                            onSubmit(formData);
-                        }
+                        // onSubmit agora usa fetch para o backend se não for apenas transição de estado interna
+                        // Mas o onSubmit atual do App.tsx apenas seta estado local.
+                        // Vamos manter assim por enquanto no dashboard manual.
+                        onSubmit(formData)
                     }}
                     className="btn-primary w-full py-6 text-xl flex items-center justify-center gap-3 shadow-primary/30"
                 >

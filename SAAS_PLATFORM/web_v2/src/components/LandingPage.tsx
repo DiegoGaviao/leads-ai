@@ -1,22 +1,11 @@
 import { ArrowRight, Sparkles, Brain, BarChart3, Zap } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { useNavigate } from 'react-router-dom';
 
 interface LandingPageProps {
-    onStart?: () => void
+    onStart: () => void
 }
 
 export function LandingPage({ onStart }: LandingPageProps) {
-    const navigate = useNavigate();
-
-    const handleStart = () => {
-        if (onStart) {
-            onStart();
-        } else {
-            navigate('/setup');
-        }
-    }
-
     return (
         <div className="relative">
             {/* Navigation */}
@@ -27,7 +16,7 @@ export function LandingPage({ onStart }: LandingPageProps) {
                     </div>
                     <span className="text-xl font-bold tracking-tight">Leads AI</span>
                 </div>
-                <button onClick={handleStart} className="btn-secondary hidden md:block">
+                <button onClick={onStart} className="btn-secondary hidden md:block">
                     Entrar
                 </button>
             </nav>
@@ -51,7 +40,7 @@ export function LandingPage({ onStart }: LandingPageProps) {
                     </p>
 
                     <div className="flex flex-col md:flex-row items-center justify-center gap-4">
-                        <button onClick={handleStart} className="btn-primary flex items-center gap-2 w-full md:w-auto text-lg group">
+                        <button onClick={onStart} className="btn-primary flex items-center gap-2 w-full md:w-auto text-lg group">
                             Começar agora <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                         </button>
                         <button className="btn-secondary w-full md:w-auto text-lg">
