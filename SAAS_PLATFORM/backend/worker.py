@@ -8,9 +8,13 @@ from dotenv import load_dotenv
 # Database & Services
 from database import get_supabase_client
 from services import AICouncilService
+import resend
 
 # Load Env
 load_dotenv()
+
+# Config Resend
+resend.api_key = os.getenv("RESEND_API_KEY") or "re_your_api_key_placeholder"
 
 print("🚀 INICIANDO WORKER LEADS AI...") 
 
@@ -97,6 +101,35 @@ def process_briefing(briefing):
         }).execute()
 
         logger.info(f"✅ Sucesso! Estratégia salva para {client_id}")
+
+        # 5. Enviar E-mail para o cliente
+        try:
+            # Buscar e-mail do cliente na tabela 'clients'
+            client_info = supabase.table('clients').select('email').eq('id', client_id).execute()
+            if client_info.data:
+                to_email = client_info.data[0]['email']
+                logger.info(f"📧 Enviando e-mail para: {to_email}")
+                
+                resend.emails.send({
+                    "from": "Leads AI <onboarding@resend.dev>",
+                    "to": to_email,
+                    "subject": "🎉 Sua Estratégia Leads AI está Pronta!",
+                    "html": f"""
+                        <h1>Parabéns! O Conselho de IAs terminou seu trabalho.</h1>
+                        <p>Sua estratégia de conteúdo personalizada baseada no DNA da sua marca e dados do Instagram já está disponível.</p>
+                        <p><strong>Acesse agora o seu Dashboard para ver:</strong></p>
+                        <ul>
+                            <li>Sua Nova Persona</li>
+                            <li>3 Pilares de Conteúdo Únicos</li>
+                            <li>5 Roteiros de Reels Prontos para Gravar</li>
+                        </ul>
+                        <br>
+                        <a href="https://leads-ai-frontend.onrender.com/dashboard" style="background:#007bff; color:white; padding:10px 20px; text-decoration:none; border-radius:5px;">Ver Minha Estratégia</a>
+                    """
+                })
+                logger.info("✅ E-mail enviado com sucesso!")
+        except Exception as mail_err:
+            logger.error(f"⚠️ Falha ao enviar e-mail: {mail_err}")
 
     except Exception as e:
         logger.error(f"❌ Falha ao processar cliente {client_id}: {e}")

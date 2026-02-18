@@ -69,6 +69,15 @@ export default function ConnectInstagramPage() {
                     <span>Continuar com Facebook</span>
                 </button>
 
+                <div className="mt-6">
+                    <button
+                        onClick={() => window.location.href = '/dashboard'}
+                        className="text-slate-500 hover:text-slate-300 text-sm font-medium transition-colors underline underline-offset-4"
+                    >
+                        Pular conexão e preencher manualmente
+                    </button>
+                </div>
+
                 <p className="mt-4 text-[10px] text-slate-600">
                     Ao continuar, você concorda com nossos Termos de Uso. Usamos a API Oficial da Meta.
                 </p>
