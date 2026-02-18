@@ -14,7 +14,10 @@ export function LandingPage({ onStart }: LandingPageProps) {
                     <div className="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
                         <Sparkles className="text-white w-6 h-6" />
                     </div>
-                    <span className="text-xl font-bold tracking-tight">Leads AI</span>
+                    <div className="flex flex-col">
+                        <span className="text-xl font-bold tracking-tight">Leads AI</span>
+                        <span className="text-[10px] text-muted-foreground font-mono leading-none">v2.0.2-final</span>
+                    </div>
                 </div>
                 <button onClick={onStart} className="btn-secondary hidden md:block">
                     Entrar
