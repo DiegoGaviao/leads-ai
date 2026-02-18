@@ -30,8 +30,9 @@ export function GenerationView({ data, onComplete }: GenerationViewProps) {
 
         // 2. Chamada Real para o Backend
         const startAnalysis = async () => {
+            const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
             try {
-                const response = await fetch('http://localhost:8000/analyze', {
+                const response = await fetch(`${API_URL}/analyze`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
