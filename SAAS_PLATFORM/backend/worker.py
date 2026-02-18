@@ -35,21 +35,29 @@ except Exception as e:
     exit(1)
 
 def fetch_pending_briefings_old():
-    """Busca da tabela antiga 'briefings'."""
+    """Busca briefings antigos que ainda não têm estratégia gerada."""
     try:
-        # Pega todos os briefings e processa (A IA é inteligente o bastante para lidar com duplicados se necessário, 
-        # mas no MVP vamos apenas processar para garantir a entrega)
+        # Pega IDs já processados na tabela de estratégias
+        # (Para o schema antigo, salvamos o client_id no campo brand_id da tabela de estratégias)
+        existing = supabase.table('leads_ai_strategies').select('brand_id').execute()
+        processed_ids = [row['brand_id'] for row in existing.data if row.get('brand_id')] if existing.data else []
+        
         result = supabase.table('briefings').select('*').execute()
-        return result.data or []
+        all_briefings = result.data or []
+        
+        # Filtra apenas os que não estão na lista de processados
+        pending = [b for b in all_briefings if b['client_id'] not in processed_ids]
+        return pending
     except Exception as e:
         logger.error(f"Erro ao buscar briefings antigos: {e}")
         return []
 
 def fetch_pending_brands_new():
-    """Busca da tabela nova 'leads_ai_brands'."""
+    """Busca marcas novas que ainda não têm estratégia gerada."""
     try:
         existing = supabase.table('leads_ai_strategies').select('brand_id').execute()
         processed_ids = [row['brand_id'] for row in existing.data if row.get('brand_id')] if existing.data else []
+        
         query = supabase.table('leads_ai_brands').select('*')
         if processed_ids:
             query = query.not_.in_('id', processed_ids)
@@ -106,11 +114,9 @@ def process_generic(data, is_old=False):
         print(f"🧠 Gerando Estratégia para {email}...")
         strategy_json = AICouncilService.generate_strategy(briefing_dict, "Análise de DNA", posts_context)
 
-        # 4. Salva Estratégia (Sempre no schema novo para unificar)
+        # 4. Salva Estratégia (Sempre no schema novo para unificar o rastreamento)
         supabase.table('leads_ai_strategies').insert({
-            'brand_id': brand_id if not is_old else None, # Se for old, perdemos o link uuid se os tipos forem diferentes
-            # Se brand_id (new) for UUID e client_id (old) for UUID, funciona.
-            # Mas vamos salvar de forma que o e-mail seja enviado de qualquer jeito.
+            'brand_id': brand_id, # Usamos este campo para marcar como "já gerado" tanto para old quanto new
             'persona_markdown': strategy_json.get('persona', ''),
             'strategy_markdown': strategy_json.get('estrategia', ''),
             'scripts_json': strategy_json.get('roteiros', []),
