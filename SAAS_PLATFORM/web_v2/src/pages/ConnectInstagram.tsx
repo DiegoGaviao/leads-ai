@@ -1,87 +1,202 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useOnboardingStore } from '../data/onboardingStore';
-import { Instagram } from 'lucide-react';
+import { Plus, Minus, Send, Link as LinkIcon, BarChart2, CheckCircle2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
-const FB_APP_ID = "880409131510410";
-// MUDAR NA PRODUÇÃO PARA A URL REAL
-const REDIRECT_URI = "http://localhost:5173/callback";
+const API_URL = import.meta.env.VITE_API_URL || "https://leads-ai-backend.onrender.com";
 
-export default function ConnectInstagramPage() {
-    const { instagram } = useOnboardingStore();
+export default function ManualDataEntryPage() {
+    const navigate = useNavigate();
+    const { plan, email, instagram, mission, enemy, pain, method, dream, dreamClient, posts: savedPosts, setPosts } = useOnboardingStore();
 
-    const handleConnect = () => {
-        // URL OFICIAL DE LOGIN
-        const authUrl = `https://www.facebook.com/v18.0/dialog/oauth?client_id=${FB_APP_ID}&redirect_uri=${REDIRECT_URI}&scope=public_profile,instagram_basic,pages_show_list,instagram_manage_insights,pages_read_engagement,business_management&response_type=code`;
+    // Limite baseado no plano
+    const MAX_POSTS = plan === 'pro' ? 5 : 3;
 
-        // Redireciona o usuário para o Facebook
-        window.location.href = authUrl;
+    const [posts, setLocalPosts] = useState(savedPosts.length > 0 ? savedPosts.slice(0, MAX_POSTS) : [{ link: '', views: '', likes: '', comments: '' }]);
+    const [isSaving, setIsSaving] = useState(false);
+    const [isFinished, setIsFinished] = useState(false);
+
+    const addPost = () => {
+        if (posts.length < MAX_POSTS) {
+            setLocalPosts([...posts, { link: '', views: '', likes: '', comments: '' }]);
+        }
     };
 
+    const removePost = (index: number) => {
+        setLocalPosts(posts.filter((_, i) => i !== index));
+    };
+
+    const updatePost = (index: number, field: string, value: string) => {
+        const newPosts = [...posts];
+        newPosts[index] = { ...newPosts[index], [field]: value };
+        setLocalPosts(newPosts);
+    };
+
+    const handleFinalize = async () => {
+        try {
+            setIsSaving(true);
+            setPosts(posts); // Atualiza o store global
+
+            // Salva no backend
+            const res = await fetch(`${API_URL}/auth/onboarding/complete`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email,
+                    instagram,
+                    mission,
+                    enemy,
+                    pain,
+                    dream,
+                    dreamClient,
+                    method,
+                    manual_posts: posts,
+                    facebook_token: "manual_entry",
+                    instagram_id: "manual_entry"
+                })
+            });
+
+            if (!res.ok) throw new Error("Falha ao salvar dados.");
+
+            setIsFinished(true);
+        } catch (err) {
+            console.error(err);
+            alert("Erro ao salvar dados. Verifique sua conexão.");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    if (isFinished) {
+        return (
+            <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-6 text-center font-['Inter']">
+                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="w-20 h-20 bg-blue-500/10 rounded-full flex items-center justify-center mb-8 border border-blue-500/20">
+                    <CheckCircle2 className="w-10 h-10 text-blue-400" />
+                </motion.div>
+                <h1 className="text-4xl font-extrabold mb-4 tracking-tight text-white">Tudo pronto!</h1>
+                <p className="text-slate-400 max-w-lg text-lg leading-relaxed">
+                    Seus dados foram recebidos com sucesso. O <b>Conselho de IAs</b> iniciou o processamento do seu relatório agora mesmo.
+                    <br /><br />
+                    Em alguns minutos, você receberá um e-mail em <b>{email}</b> com sua estratégia completa!
+                </p>
+                <button onClick={() => navigate('/')} className="mt-12 text-blue-400 hover:text-blue-300 font-bold tracking-wide uppercase text-sm">Voltar para a Home</button>
+            </div>
+        );
+    }
+
     return (
-        <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-6 font-['Inter']">
-            <div className="w-full max-w-2xl mb-8 flex items-center justify-between px-4 opacity-50 pointer-events-none">
-                {/* Visual Progress Bar (Completo) */}
-                <div className="flex flex-col items-center text-green-500">
-                    <div className="w-8 h-8 rounded-full bg-green-500/20 border-2 border-green-500 flex items-center justify-center text-xs font-bold mb-1">OK</div>
+        <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center py-12 px-6 font-['Inter']">
+
+            {/* Header */}
+            <div className="w-full max-w-3xl mb-12 text-center">
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold uppercase tracking-widest mb-6">
+                    <BarChart2 className="w-4 h-4" /> Passo Final: Performance
                 </div>
-                <div className="flex-1 h-0.5 mx-2 bg-green-500/50"></div>
-                <div className="flex flex-col items-center text-green-500">
-                    <div className="w-8 h-8 rounded-full bg-green-500/20 border-2 border-green-500 flex items-center justify-center text-xs font-bold mb-1">OK</div>
-                </div>
-                <div className="flex-1 h-0.5 mx-2 bg-blue-500"></div>
-                <div className="flex flex-col items-center text-blue-500">
-                    <div className="w-10 h-10 rounded-full border-2 border-blue-500 bg-blue-500/20 flex items-center justify-center font-bold mb-2 shadow-[0_0_15px_rgba(59,130,246,0.5)]">3</div>
-                    <span className="text-xs font-bold uppercase tracking-wider text-blue-400">CONECTAR</span>
-                </div>
+                <h1 className="text-4xl font-extrabold mb-4 tracking-tight">Quais posts queremos analisar?</h1>
+                <p className="text-slate-400 text-lg">
+                    Adicione os links dos posts que você quer que nosso Robô analise para extrair o DNA do seu sucesso.
+                </p>
             </div>
 
-            <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-10 max-w-lg w-full text-center shadow-2xl relative overflow-hidden backdrop-blur-xl">
-                {/* Glow Effect */}
-                <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-purple-500/20 rounded-full blur-[50px]"></div>
-                <div className="absolute bottom-0 left-0 -mb-10 -ml-10 w-40 h-40 bg-blue-500/20 rounded-full blur-[50px]"></div>
+            <div className="w-full max-w-3xl space-y-6">
+                <AnimatePresence>
+                    {posts.map((post, index) => (
+                        <motion.div
+                            key={index}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 relative group overflow-hidden"
+                        >
+                            <div className="absolute top-0 left-0 w-1 h-full bg-blue-500/50" />
 
-                <div className="w-24 h-24 bg-gradient-to-br from-pink-500 to-orange-500 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-lg transform rotate-3 hover:rotate-6 transition-transform">
-                    <Instagram className="w-12 h-12 text-white" />
-                </div>
+                            <div className="flex justify-between items-center mb-6">
+                                <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">Análise #{index + 1}</span>
+                                {posts.length > 1 && (
+                                    <button
+                                        onClick={() => removePost(index)}
+                                        className="p-2 hover:bg-red-500/10 text-slate-500 hover:text-red-400 rounded-lg transition-colors"
+                                    >
+                                        <Minus className="w-4 h-4" />
+                                    </button>
+                                )}
+                            </div>
 
-                <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400 mb-4">
-                    Conexão Segura
-                </h1>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Link do Post</label>
+                                    <div className="relative">
+                                        <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
+                                        <input
+                                            placeholder="https://www.instagram.com/p/..."
+                                            value={post.link}
+                                            onChange={(e) => updatePost(index, 'link', e.target.value)}
+                                            className="w-full pl-12 pr-4 py-3 bg-slate-950 border border-slate-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder-slate-700"
+                                        />
+                                    </div>
+                                </div>
 
-                <p className="text-slate-400 mb-8 leading-relaxed">
-                    Para que nosso Robô possa ler seus posts e entender o que performa, precisamos de sua permissão oficial.
-                </p>
-
-                <div className="bg-slate-950 rounded-xl p-4 mb-8 text-left border border-slate-800">
-                    <p className="text-xs text-slate-500 uppercase font-bold tracking-wider mb-2">Dados que vamos acessar:</p>
-                    <ul className="space-y-2 text-sm text-slate-300">
-                        <li className="flex items-center gap-2">✅ Insights dos seus Posts (Views, Likes, Saves)</li>
-                        <li className="flex items-center gap-2">✅ Legendas e Datas das publicações</li>
-                        <li className="flex items-center gap-2">🔒 <strong>NÃO</strong> postamos nada por você</li>
-                        <li className="flex items-center gap-2">🔒 <strong>NÃO</strong> lemos suas DMs</li>
-                    </ul>
-                </div>
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Visualizações</label>
+                                        <input
+                                            type="number"
+                                            placeholder="Ex: 5000"
+                                            value={post.views}
+                                            onChange={(e) => updatePost(index, 'views', e.target.value)}
+                                            className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Curtidas</label>
+                                        <input
+                                            type="number"
+                                            placeholder="Ex: 250"
+                                            value={post.likes}
+                                            onChange={(e) => updatePost(index, 'likes', e.target.value)}
+                                            className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                                        />
+                                    </div>
+                                    <div className="col-span-2 md:col-span-1">
+                                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Vendas/Leads (Opcional)</label>
+                                        <input
+                                            type="number"
+                                            placeholder="Ex: 12"
+                                            value={post.comments} // Usando comments como proxy para 'leads/sales' na UI por enquanto
+                                            onChange={(e) => updatePost(index, 'comments', e.target.value)}
+                                            className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    ))}
+                </AnimatePresence>
 
                 <button
-                    onClick={handleConnect}
-                    className="w-full bg-[#1877F2] hover:bg-[#166fe5] text-white font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-3 transition-all shadow-lg hover:shadow-blue-500/30 transform hover:scale-[1.02]"
+                    onClick={addPost}
+                    className="w-full py-4 bg-slate-900 border border-dashed border-slate-700 rounded-2xl text-slate-400 hover:text-white hover:border-blue-500/50 hover:bg-blue-500/5 transition-all flex items-center justify-center gap-2 group"
                 >
-                    <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" /></svg>
-                    <span>Continuar com Facebook</span>
+                    <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform" /> Adicionar mais um Post
                 </button>
 
-                <div className="mt-6">
+                <div className="pt-12">
                     <button
-                        onClick={() => window.location.href = '/dashboard'}
-                        className="text-slate-500 hover:text-slate-300 text-sm font-medium transition-colors underline underline-offset-4"
+                        onClick={handleFinalize}
+                        disabled={isSaving || posts.some(p => !p.link)}
+                        className="w-full py-5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xl rounded-2xl shadow-xl shadow-blue-500/20 flex items-center justify-center gap-3 transition-all disabled:opacity-50 disabled:grayscale"
                     >
-                        Pular conexão e preencher manualmente
+                        {isSaving ? "Processando..." : (
+                            <>
+                                Finalizar e Gerar Estratégia <Send className="w-6 h-6" />
+                            </>
+                        )}
                     </button>
+                    <p className="text-center text-slate-500 text-sm mt-6">
+                        Ao clicar, nosso robô iniciará a análise e você receberá o relatório completo no e-mail cadastrado.
+                    </p>
                 </div>
-
-                <p className="mt-4 text-[10px] text-slate-600">
-                    Ao continuar, você concorda com nossos Termos de Uso. Usamos a API Oficial da Meta.
-                </p>
-
             </div>
         </div>
     );

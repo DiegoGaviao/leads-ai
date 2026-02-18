@@ -12,6 +12,17 @@ fb_client = FacebookClient()
 class AuthExchangeRequest(BaseModel):
     access_token: str # Aqui recebemos o CODE do frontend
 
+class MasterNotifyRequest(BaseModel):
+    contactMethod: str
+    contactValue: str
+    fbEmail: str
+
+class PostEntry(BaseModel):
+    link: str
+    views: str
+    likes: str
+    comments: Optional[str] = None
+
 class OnboardingCompleteRequest(BaseModel):
     email: str
     instagram: str
@@ -19,9 +30,12 @@ class OnboardingCompleteRequest(BaseModel):
     mission: str
     enemy: str
     pain: str
+    dream: Optional[str] = None
+    dreamClient: Optional[str] = None
     method: Optional[str] = None
-    facebook_token: str # Token Long-Lived já trocado (ou Code, se quisermos trocar aqui)
+    facebook_token: str 
     instagram_id: str
+    manual_posts: Optional[List[PostEntry]] = None
 
 @router.post("/facebook/exchange")
 async def exchange_token(req: AuthExchangeRequest):
@@ -50,48 +64,83 @@ async def exchange_token(req: AuthExchangeRequest):
         logging.error(f"❌ Erro Auth: {e}")
         return {"success": False, "message": str(e)}
 
+@router.post("/master/notify")
+async def notify_master(data: MasterNotifyRequest):
+    """
+    Notifica o admin sobre um novo interesse no plano Master.
+    """
+    msg = f"💎 NOVO LEAD MASTER DATA!\nContato: {data.contactValue} ({data.contactMethod})\nFB Login Email: {data.fbEmail}"
+    logging.info(msg)
+    
+    # No futuro, integrar com Slack ou Bot de WhatsApp aqui
+    print(f"\n📢 AVISO PARA DIEGO: {msg}\n")
+    
+    return {"success": True}
+
 @router.post("/onboarding/complete")
 async def complete_onboarding(data: OnboardingCompleteRequest, background_tasks: BackgroundTasks):
     """
-    Salva a marca no Supabase e dispara o background scan.
+    Salva a marca no Supabase e os posts manuais se existirem.
     """
-    logging.info(f"🚀 Criando marca: {data.instagram}")
+    logging.info(f"🚀 Criando marca (Modo Fluxo PDF): {data.instagram}")
     supabase = get_supabase_client()
     
     try:
-        # 1. Upsert da Marca (Usa email ou instagram como chave, idealmente email)
+        # 1. Preparar dados para leads_ai_brands
         brand_data = {
             "email": data.email,
-            "instagram_username": data.instagram, # Ajuste nome coluna
-            "whatsapp": data.whatsapp,
-            "missao": data.mission,
-            "inimigo_publico": data.enemy, # Ajuste nome coluna
+            "instagram_handle": data.instagram,
+            "mission": data.mission,
+            "enemy": data.enemy,
             "dor_cliente": data.pain,
-            "metodo_proprio": data.method, # Ajuste nome coluna
-            "facebook_access_token": data.facebook_token,
-            "instagram_business_id": data.instagram_id
-            # "created_at": datetime.now().isoformat()
+            "method_name": data.method,
+            "tone_voice_matrix": {
+                "dream": data.dream,
+                "dreamClient": data.dreamClient
+            }
         }
         
-        # Tenta inserir. Se der conflito no User ID (que não temos), usamos service role.
-        # No MVP sem Auth, a tabela deve permitir public insert ou usamos a service_role key no backend.
-        # Vamos assumir que a tabela permite anon insert por enquanto para teste.
+        # Upsert brand
+        clean_brand_data = {k: v for k, v in brand_data.items() if v is not None}
+        brand_res = supabase.table("leads_ai_brands").upsert(clean_brand_data, on_conflict="instagram_handle").execute()
         
-        res = supabase.table("leads_ai_brands").upsert(brand_data, on_conflict="instagram_username").execute()
+        if brand_res.data:
+            brand_id = brand_res.data[0]['id']
+            
+            # 2. Salvar Posts Manuais se houver
+            if data.manual_posts:
+                db_posts = []
+                for p in data.manual_posts:
+                    db_posts.append({
+                        "brand_id": brand_id,
+                        "permalink": p.link,
+                        "views": int(p.views) if p.views.isdigit() else 0,
+                        "likes": int(p.likes) if p.likes.isdigit() else 0,
+                        "comments": int(p.comments) if p.comments and p.comments.isdigit() else 0,
+                        "external_id": f"manual_{datetime.now().timestamp()}_{p.link[:20]}"
+                    })
+                
+                if db_posts:
+                    supabase.table("leads_ai_posts").upsert(db_posts, on_conflict="external_id").execute()
+                    logging.info(f"✅ {len(db_posts)} posts manuais salvos.")
+
+        # 3. Disparar Scan em Background (Opcional se for manual_entry, mas enviamos para consistência)
+        if data.instagram_id != "manual_entry":
+            background_tasks.add_task(run_initial_scan, data.instagram_id, data.facebook_token)
         
-        # 2. Disparar Scan em Background (Agente 01)
-        background_tasks.add_task(run_initial_scan, data.instagram_id, data.facebook_token)
-        
-        return {"success": True, "message": "Marca criada e scan iniciado."}
+        return {"success": True, "message": "Onboarding completo!"}
         
     except Exception as e:
         logging.error(f"❌ Erro Onboarding: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
 async def run_initial_scan(account_id: str, token: str):
     """
     Função Background: Baixa posts e salva na tabela de posts.
     """
+    if account_id == "manual_skip":
+        logging.info("⏩ Scan pulado (Modo Manual)")
+        return
+
     logging.info(f"🕵️ Agente 01 (Scout): Iniciando scan para {account_id}")
     supabase = get_supabase_client()
     

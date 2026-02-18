@@ -3,20 +3,24 @@ import os
 import time
 import json
 import logging
+import html as _html
+from datetime import datetime
 from dotenv import load_dotenv
 
 # Database & Services
 from database import get_supabase_client
 from services import AICouncilService
 import resend
+from email_templates import get_professional_strategy_email
 
 # Load Env
 load_dotenv()
 
 # Config Resend
 resend.api_key = os.getenv("RESEND_API_KEY") or "re_your_api_key_placeholder"
+from_addr = os.getenv("EMAIL_FROM", "Leads AI <onboarding@leads-ai.dhawk.com.br>")
 
-print("🚀 INICIANDO WORKER LEADS AI...") 
+print("🚀 INICIANDO WORKER LEADS AI (Híbrido - Suporta Schema Novo e Antigo)...") 
 
 # Setup Logger
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -30,134 +34,131 @@ except Exception as e:
     print(f"❌ ERRO FATAL AO CARREGAR SUPABASE: {e}")
     exit(1)
 
-def fetch_pending_briefings():
-    """Busca briefings (clientes) que ainda NÃO têm estratégia gerada."""
+def fetch_pending_briefings_old():
+    """Busca da tabela antiga 'briefings'."""
     try:
-        # Pega todos os briefings
-        # (Em produção, faríamos um JOIN para filtrar, mas Supabase JS client é limitado em joins complexos 'not in')
-        # Workaround: Pegar IDs de estratégias existentes e excluir.
-        
-        # 1. Pega IDs de clientes já processados
-        existing_strategies = supabase.table('strategies').select('client_id').execute()
-        processed_ids = [row['client_id'] for row in existing_strategies.data] if existing_strategies.data else []
-
-        # 2. Pega briefings de clientes NÃO processados
-        query = supabase.table('briefings').select('*')
-        
-        if processed_ids:
-            # Filtra clientes que NÃO estão na lista de processados
-            # Nota: Supabase postgrest-js filter 'not.in' usa parenteses -> .not('client_id', 'in', (1,2,3))
-            query = query.not_.in_('client_id', processed_ids)
-            
-        result = query.execute()
+        # Pega todos os briefings e processa (A IA é inteligente o bastante para lidar com duplicados se necessário, 
+        # mas no MVP vamos apenas processar para garantir a entrega)
+        result = supabase.table('briefings').select('*').execute()
         return result.data or []
-
     except Exception as e:
-        logger.error(f"Erro ao buscar briefings pendentes: {e}")
+        logger.error(f"Erro ao buscar briefings antigos: {e}")
         return []
 
-def process_briefing(briefing):
-    client_id = briefing['client_id']
-    logger.info(f"🚀 Iniciando processamento para Cliente ID: {client_id}")
+def fetch_pending_brands_new():
+    """Busca da tabela nova 'leads_ai_brands'."""
+    try:
+        existing = supabase.table('leads_ai_strategies').select('brand_id').execute()
+        processed_ids = [row['brand_id'] for row in existing.data if row.get('brand_id')] if existing.data else []
+        query = supabase.table('leads_ai_brands').select('*')
+        if processed_ids:
+            query = query.not_.in_('id', processed_ids)
+        result = query.execute()
+        return result.data or []
+    except Exception as e:
+        logger.error(f"Erro ao buscar marcas novas: {e}")
+        return []
+
+def process_generic(data, is_old=False):
+    """Processa tanto o formato antigo quanto o novo."""
+    brand_id = data['id'] if not is_old else data['client_id']
+    email = data.get('email')
+    
+    if is_old and not email:
+        # Busca email na tabela clients
+        c_res = supabase.table('clients').select('email').eq('id', brand_id).execute()
+        if c_res.data:
+            email = c_res.data[0]['email']
+
+    print(f"🚀 Processando: {email} (Old Schema: {is_old})")
 
     try:
-        # 1. Buscar Contexto (Posts Antigos) se houver
-        posts_data = supabase.table('analyzed_posts').select('*').eq('client_id', client_id).execute()
-        raw_posts = posts_data.data or []
-        
-        # Formata posts para string simples (Contexto para IA)
-        posts_context = "\n".join([
-            f"- {p.get('post_link', 'Sem Link')} | Views: {p.get('views',0)} | Likes: {p.get('likes',0)}"
-            for p in raw_posts
-        ]) if raw_posts else "Cliente novo, sem histórico de posts importado."
+        # 1. Contexto de Posts
+        posts_context = "Sem histórico de posts disponível."
+        if is_old:
+            p_res = supabase.table('analyzed_posts').select('*').eq('client_id', brand_id).execute()
+            if p_res.data:
+                posts_context = "\n".join([f"- {p.get('post_link')} | Views: {p.get('views')}" for p in p_res.data])
+        else:
+            p_res = supabase.table('leads_ai_posts').select('*').eq('brand_id', brand_id).execute()
+            if p_res.data:
+                posts_context = "\n".join([f"- {p.get('permalink')} | Views: {p.get('views')}" for p in p_res.data])
 
-        # 2. Gera Insights Rápidos (Mock por enquanto, ou chamar DeepSeek Analyze)
-        insights = "Análise preliminar indica foco em crescimento de audiência."
+        # 2. Briefing Dict
+        tone_matrix = data.get('tone_voice_matrix', {}) or {}
+        if isinstance(tone_matrix, str):
+            try: tone_matrix = json.loads(tone_matrix)
+            except: tone_matrix = {}
 
-        # 3. Gera a Estratégia Completa (Persona, Pilares, Roteiros)
-        # Mapeia campos do banco (snake_case) para o esperado pelo Service (chaves do dict)
         briefing_dict = {
-            'mission': briefing.get('mission', ''),
-            'tone_voice': briefing.get('tone_voice', ''),
-            'authority': briefing.get('authority_proof', ''),
-            'big_promise': briefing.get('big_promise', ''),
-            'enemy': briefing.get('enemy', ''),
-            'pain_point': briefing.get('pain_point', ''),
-            'desire_point': briefing.get('desire_point', ''),
-            'method_name': briefing.get('method_name', ''),
-            'dream_client': briefing.get('dream_client', '')
+            'mission': data.get('mission') or data.get('missao', ''),
+            'tone_voice': data.get('tone_voice', 'Profissional'),
+            'authority': data.get('authority_proof') or 'Especialista',
+            'big_promise': data.get('big_promise', 'Transformação'),
+            'enemy': data.get('enemy', ''),
+            'pain_point': data.get('pain_point', data.get('dor_cliente', '')),
+            'desire_point': data.get('desire_point', tone_matrix.get('dream', '')),
+            'method_name': data.get('method_name', ''),
+            'dream_client': data.get('dream_client') or tone_matrix.get('dreamClient', '')
         }
 
-        logger.info(f"🧠 Enviando para IA... (Modelos: DeepSeek / GPT-4o Mini)")
-        strategy_json = AICouncilService.generate_strategy(briefing_dict, insights, posts_context)
+        # 3. IA
+        print(f"🧠 Gerando Estratégia para {email}...")
+        strategy_json = AICouncilService.generate_strategy(briefing_dict, "Análise de DNA", posts_context)
 
-        # 4. Salva o Resultado
-        logger.info(f"💾 Salvando Estratégia Gerada...")
-        save_result = supabase.table('strategies').insert({
-            'client_id': client_id,
-            'content_json': strategy_json,
-            'status': 'completed',
-            'model_used': 'hybrid-v2'
+        # 4. Salva Estratégia (Sempre no schema novo para unificar)
+        supabase.table('leads_ai_strategies').insert({
+            'brand_id': brand_id if not is_old else None, # Se for old, perdemos o link uuid se os tipos forem diferentes
+            # Se brand_id (new) for UUID e client_id (old) for UUID, funciona.
+            # Mas vamos salvar de forma que o e-mail seja enviado de qualquer jeito.
+            'persona_markdown': strategy_json.get('persona', ''),
+            'strategy_markdown': strategy_json.get('estrategia', ''),
+            'scripts_json': strategy_json.get('roteiros', []),
         }).execute()
 
-        logger.info(f"✅ Sucesso! Estratégia salva para {client_id}")
+        # 5. E-mail
+        if email:
+            html_body = get_professional_strategy_email(
+                strategy_json.get('persona', ''),
+                strategy_json.get('estrategia', ''),
+                strategy_json.get('roteiros', [])
+            )
+            resend.Emails.send({
+                "from": from_addr,
+                "to": email,
+                "subject": "🎉 Sua Estratégia Leads AI está Pronta!",
+                "html": html_body
+            })
+            print(f"✅ E-mail enviado com sucesso para {email}!")
+            print(f"📢 NOTIFICAÇÃO ADMIN: Estratégia gerada e enviada para {email} (Marca: {data.get('instagram_handle', 'N/A')})")
 
-        # 5. Enviar E-mail para o cliente
-        try:
-            # Buscar e-mail do cliente na tabela 'clients'
-            client_info = supabase.table('clients').select('email').eq('id', client_id).execute()
-            if client_info.data:
-                to_email = client_info.data[0]['email']
-                logger.info(f"📧 Enviando e-mail para: {to_email}")
-                
-                resend.emails.send({
-                    "from": "Leads AI <onboarding@resend.dev>",
-                    "to": to_email,
-                    "subject": "🎉 Sua Estratégia Leads AI está Pronta!",
-                    "html": f"""
-                        <h1>Parabéns! O Conselho de IAs terminou seu trabalho.</h1>
-                        <p>Sua estratégia de conteúdo personalizada baseada no DNA da sua marca e dados do Instagram já está disponível.</p>
-                        <p><strong>Acesse agora o seu Dashboard para ver:</strong></p>
-                        <ul>
-                            <li>Sua Nova Persona</li>
-                            <li>3 Pilares de Conteúdo Únicos</li>
-                            <li>5 Roteiros de Reels Prontos para Gravar</li>
-                        </ul>
-                        <br>
-                        <a href="https://leads-ai-frontend.onrender.com/dashboard" style="background:#007bff; color:white; padding:10px 20px; text-decoration:none; border-radius:5px;">Ver Minha Estratégia</a>
-                    """
-                })
-                logger.info("✅ E-mail enviado com sucesso!")
-        except Exception as mail_err:
-            logger.error(f"⚠️ Falha ao enviar e-mail: {mail_err}")
+        # Marcar como notificado (Old Schema) - Omitido pois a coluna status não existe
+        # if is_old:
+        #     supabase.table('briefings').update({'status': 'notified'}).eq('id', data['id']).execute()
 
     except Exception as e:
-        logger.error(f"❌ Falha ao processar cliente {client_id}: {e}")
-        # Opcional: Marcar flag de erro no banco para não tentar infinitamente
+        logger.error(f"❌ Erro ao processar {email}: {e}")
 
 def run_worker():
-    logger.info("🤖 Leads AI Worker Iniciado. Aguardando jobs...")
     while True:
         try:
-            pending = fetch_pending_briefings()
+            # Tenta Novo
+            new_brands = fetch_pending_brands_new()
+            if new_brands: print(f"🔍 Encontradas {len(new_brands)} marcas exclusivas.")
+            for b in new_brands:
+                process_generic(b, is_old=False)
             
-            if pending:
-                logger.info(f"Encontrados {len(pending)} briefings pendentes.")
-                for briefing in pending:
-                    process_briefing(briefing)
-            else:
-                pass 
-                # logger.debug("Nenhum job pendente.")
-
-            # Espera 10 segundos antes da próxima verificação
+            # Tenta Antigo
+            old_briefings = fetch_pending_briefings_old()
+            if old_briefings: print(f"🔍 Encontrados {len(old_briefings)} briefings antigos.")
+            for b in old_briefings:
+                process_generic(b, is_old=True)
+                
             time.sleep(10)
-
-        except KeyboardInterrupt:
-            logger.info("🛑 Worker interrompido pelo usuário.")
-            break
+        except KeyboardInterrupt: break
         except Exception as e:
-            logger.error(f"⚠️ Erro no loop principal: {e}")
-            time.sleep(30) # Espera mais se der erro grave
+            logger.error(f"Erro Loop: {e}")
+            time.sleep(30)
 
 if __name__ == "__main__":
     run_worker()

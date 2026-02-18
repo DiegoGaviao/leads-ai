@@ -16,18 +16,22 @@ export default function StrategyView() {
 
     useEffect(() => {
         const fetchStrategy = async () => {
-            // se strategy_id foi passado na URL, buscamos diretamente pela strategy.id
+            // se strategy_id foi passado na URL, buscamos diretamente pela leads_ai_strategies.id
             if (strategyIdParam) {
                 try {
                     const { data: strat, error: stratErr } = await supabase
-                        .from('strategies')
-                        .select('content_json')
+                        .from('leads_ai_strategies')
+                        .select('*')
                         .eq('id', strategyIdParam)
                         .maybeSingle();
 
                     if (stratErr) throw stratErr;
                     if (strat) {
-                        setStrategy(strat.content_json);
+                        setStrategy({
+                            persona: strat.persona_markdown,
+                            estrategia: strat.strategy_markdown,
+                            roteiros: strat.scripts_json
+                        });
                     } else {
                         setStrategy(null);
                     }
@@ -47,23 +51,25 @@ export default function StrategyView() {
             }
 
             try {
-            try {
-                // 1. Buscar o ID do cliente pelo e-mail
-                const { data: client, error: clientErr } = await supabase
-                    .from('clients')
+                // 1. Buscar a marca pelo e-mail
+                const { data: brand, error: brandErr } = await supabase
+                    .from('leads_ai_brands')
                     .select('id')
                     .eq('email', email)
-                    .single();
+                    .order('created_at', { ascending: false })
+                    .limit(1)
+                    .maybeSingle();
 
-                if (clientErr || !client) {
-                    throw new Error("Cliente não encontrado.");
+                if (brandErr || !brand) {
+                    setStrategy(null);
+                    return;
                 }
 
-                // 2. Buscar a estratégia gerada para esse cliente
+                // 2. Buscar a estratégia gerada para essa marca
                 const { data: stratData, error: stratErr } = await supabase
-                    .from('strategies')
+                    .from('leads_ai_strategies')
                     .select('*')
-                    .eq('client_id', client.id)
+                    .eq('brand_id', brand.id)
                     .order('created_at', { ascending: false })
                     .limit(1)
                     .maybeSingle();
@@ -71,9 +77,12 @@ export default function StrategyView() {
                 if (stratErr) throw stratErr;
 
                 if (stratData) {
-                    setStrategy(stratData.content_json);
+                    setStrategy({
+                        persona: stratData.persona_markdown,
+                        estrategia: stratData.strategy_markdown,
+                        roteiros: stratData.scripts_json
+                    });
                 } else {
-                    // Se não existir, pode estar sendo processada
                     setStrategy(null);
                 }
             } catch (err: any) {
@@ -86,16 +95,15 @@ export default function StrategyView() {
 
         fetchStrategy();
 
-        // Setup Realtime Subscription para atualizar assim que o Worker salvar
+        // Setup Realtime Subscription
         const channel = supabase
-            .channel('strategy_updates')
+            .channel('leads_strategy_updates')
             .on('postgres_changes', {
                 event: 'INSERT',
                 schema: 'public',
-                table: 'strategies'
+                table: 'leads_ai_strategies'
             }, () => {
-                // Se houver qualquer inserção, tentamos buscar a mais recente (o fetch já filtra por cliente)
-                console.log("Nova estratégia detectada!");
+                console.log("🚀 Nova estratégia detectada no banco novo!");
                 fetchStrategy();
             })
             .subscribe();

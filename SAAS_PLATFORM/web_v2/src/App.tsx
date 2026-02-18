@@ -8,6 +8,7 @@ import OnboardingPage from './pages/OnboardingPage';
 import ConnectInstagramPage from './pages/ConnectInstagram';
 import CallbackPage from './pages/CallbackPage';
 import StrategyView from './pages/StrategyView';
+import MasterOnboardingPage from './pages/MasterOnboarding';
 
 function App() {
   const navigate = useNavigate();
@@ -31,6 +32,7 @@ function App() {
         {/* Flow de Onboarding (Pós-Venda) */}
         <Route path="/setup" element={<OnboardingPage />} />
         <Route path="/connect" element={<ConnectInstagramPage />} />
+        <Route path="/master-onboarding" element={<MasterOnboardingPage />} />
         <Route path="/callback" element={<CallbackPage />} />
         <Route path="/strategy" element={<StrategyView />} />
 
@@ -50,7 +52,7 @@ function App() {
 
 export default function AppWrapper() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/projetos/leads-ai">
       <App />
     </BrowserRouter>
   );

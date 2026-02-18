@@ -49,6 +49,128 @@ export function LandingPage({ onStart }: LandingPageProps) {
                     </div>
                 </motion.div>
 
+                {/* Pricing Section */}
+                <div id="pricing" className="mt-40 scroll-mt-20">
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        className="text-center mb-16"
+                    >
+                        <h2 className="text-4xl md:text-5xl font-extrabold mb-4">Escolha seu Nível</h2>
+                        <p className="text-muted-foreground text-lg">Deixe os dados guiarem seu crescimento.</p>
+                    </motion.div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                        {/* Trial Plan */}
+                        <div className="glass p-8 rounded-3xl border border-white/5 flex flex-col items-start text-left relative overflow-hidden group">
+                            <div className="mb-8">
+                                <span className="text-sm font-bold text-muted-foreground uppercase tracking-widest mb-4 block">Trial Grátis</span>
+                                <div className="flex items-baseline gap-1">
+                                    <span className="text-4xl font-extrabold">R$ 0</span>
+                                </div>
+                                <p className="text-sm text-muted-foreground mt-4 leading-relaxed">
+                                    Experimente a tecnologia sem riscos e descubra seus primeiros padrões.
+                                </p>
+                            </div>
+
+                            <button
+                                onClick={() => window.location.href = '/projetos/leads-ai/setup?plan=free'}
+                                className="w-full py-4 rounded-xl bg-white/5 border border-white/10 font-bold hover:bg-white/10 transition-all mb-8"
+                            >
+                                Começar Grátis
+                            </button>
+
+                            <ul className="space-y-4 text-sm text-muted-foreground w-full">
+                                <li className="flex items-center gap-3">
+                                    <Zap className="w-4 h-4 text-primary" /> Análise de 3 Posts
+                                </li>
+                                <li className="flex items-center gap-3">
+                                    <Zap className="w-4 h-4 text-primary" /> Diagnóstico de Ganchos
+                                </li>
+                                <li className="flex items-center gap-3">
+                                    <Zap className="w-4 h-4 text-primary" /> 1 Ideia de Roteiro
+                                </li>
+                            </ul>
+                        </div>
+
+                        {/* Pro Plan */}
+                        <div className="glass p-8 rounded-3xl border-2 border-primary/50 flex flex-col items-start text-left relative overflow-hidden group bg-primary/5">
+                            <div className="absolute top-4 right-4 px-3 py-1 bg-primary text-[10px] font-bold uppercase tracking-widest rounded-full">
+                                Mais Popular
+                            </div>
+                            <div className="mb-8">
+                                <span className="text-sm font-bold text-primary uppercase tracking-widest mb-4 block">Pro Strategy</span>
+                                <div className="flex items-baseline gap-1">
+                                    <span className="text-4xl font-extrabold">R$ 29,90</span>
+                                    <span className="text-muted-foreground text-sm">/único</span>
+                                </div>
+                                <p className="text-sm text-muted-foreground mt-4 leading-relaxed">
+                                    Engenharia reversa completa para escalar seu perfil.
+                                </p>
+                            </div>
+
+                            <button
+                                onClick={() => window.location.href = 'https://mpago.la/2sM8erQ'}
+                                className="w-full py-4 rounded-xl bg-primary text-white font-bold hover:bg-primary-hover transition-all mb-8 shadow-lg shadow-primary/20"
+                            >
+                                Desbloquear Estratégia
+                            </button>
+
+                            <ul className="space-y-4 text-sm w-full">
+                                <li className="flex items-center gap-3">
+                                    <Zap className="w-4 h-4 text-primary" /> Análise de 5 Melhores Posts
+                                </li>
+                                <li className="flex items-center gap-3">
+                                    <Zap className="w-4 h-4 text-primary" /> Raio-X de Padrões Visuais
+                                </li>
+                                <li className="flex items-center gap-3">
+                                    <Zap className="w-4 h-4 text-primary" /> Gráfico "Ouro vs Lixo"
+                                </li>
+                                <li className="flex items-center gap-3">
+                                    <Zap className="w-4 h-4 text-primary" /> 3 Roteiros Prontos para Gravar
+                                </li>
+                            </ul>
+                        </div>
+
+                        {/* Master Plan */}
+                        <div className="glass p-8 rounded-3xl border border-white/5 flex flex-col items-start text-left relative overflow-hidden group">
+                            <div className="mb-8">
+                                <span className="text-sm font-bold text-secondary uppercase tracking-widest mb-4 block">Master Data</span>
+                                <div className="flex items-baseline gap-1">
+                                    <span className="text-4xl font-extrabold">R$ 129,90</span>
+                                    <span className="text-muted-foreground text-sm">/mês</span>
+                                </div>
+                                <p className="text-sm text-muted-foreground mt-4 leading-relaxed">
+                                    Conectamos todos os seus posts e dados ao sistema para uma análise completa.
+                                </p>
+                            </div>
+
+                            <button
+                                onClick={() => window.location.href = 'https://mpago.la/31mTMpn'}
+                                className="w-full py-4 rounded-xl bg-white/5 border border-white/10 font-bold hover:bg-white/10 transition-all mb-8"
+                            >
+                                Assinar Master
+                            </button>
+
+                            <ul className="space-y-4 text-sm text-muted-foreground w-full">
+                                <li className="flex items-center gap-3">
+                                    <Zap className="w-4 h-4 text-secondary" /> Conexão Total com Instagram
+                                </li>
+                                <li className="flex items-center gap-3">
+                                    <Zap className="w-4 h-4 text-secondary" /> Análise de Todo Histórico
+                                </li>
+                                <li className="flex items-center gap-3">
+                                    <Zap className="w-4 h-4 text-secondary" /> 2 Roteiros Semanais (8/mês)
+                                </li>
+                                <li className="flex items-center gap-3">
+                                    <Zap className="w-4 h-4 text-secondary" /> Relatório de Evolução Mensal
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
                 {/* Features Preview */}
                 <div className="mt-40 grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
                     <FeatureCard

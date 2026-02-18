@@ -37,6 +37,10 @@ services:
           type: web
           name: leads-ai-backend
           property: url
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
 
   # ---------------------------------------------------------------------------
   # ⚙️ Service 3: AI Worker (Background Processing)
