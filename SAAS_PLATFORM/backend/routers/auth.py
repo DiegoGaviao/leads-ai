@@ -107,8 +107,18 @@ async def complete_onboarding(data: OnboardingCompleteRequest, background_tasks:
         clean_brand_data = {k: v for k, v in brand_data.items() if v is not None}
         brand_res = supabase.table("leads_ai_brands").upsert(clean_brand_data, on_conflict="instagram_handle").execute()
         
+        logging.info(f"Brand Res: {brand_res.data}")
+        
+        brand_id = None
         if brand_res.data:
             brand_id = brand_res.data[0]['id']
+        else:
+            # Fallback: Se o upsert não retornou dados, tenta buscar pelo handle
+            fallback_res = supabase.table("leads_ai_brands").select("id").eq("instagram_handle", data.instagram).execute()
+            if fallback_res.data:
+                brand_id = fallback_res.data[0]['id']
+
+        if brand_id:
             
             # 2. Salvar Posts Manuais se houver
             if data.manual_posts:
@@ -127,8 +137,8 @@ async def complete_onboarding(data: OnboardingCompleteRequest, background_tasks:
                     })
                 
                 if db_posts:
-                    supabase.table("leads_ai_posts").upsert(db_posts, on_conflict="external_id").execute()
-                    logging.info(f"✅ {len(db_posts)} posts manuais salvos.")
+                    post_res = supabase.table("leads_ai_posts").upsert(db_posts, on_conflict="external_id").execute()
+                    logging.info(f"✅ Posts Res: {len(post_res.data)} posts salvos.")
 
         # 3. Disparar Scan em Background (Opcional se for manual_entry, mas enviamos para consistência)
         if data.instagram_id != "manual_entry":
@@ -137,8 +147,9 @@ async def complete_onboarding(data: OnboardingCompleteRequest, background_tasks:
         return {"success": True, "message": "Onboarding completo!"}
         
     except Exception as e:
-        logging.error(f"❌ Erro Onboarding: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logging.error(f"❌ Erro Crítico Onboarding: {str(e)}")
+        # Se for erro do Supabase, o e pode ter detalhes
+        raise HTTPException(status_code=500, detail=f"Erro interno no servidor: {str(e)}")
 async def run_initial_scan(account_id: str, token: str):
     """
     Função Background: Baixa posts e salva na tabela de posts.
