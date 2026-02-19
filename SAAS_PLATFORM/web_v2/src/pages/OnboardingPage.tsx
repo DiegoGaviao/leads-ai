@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useOnboardingStore } from '../data/onboardingStore';
-import { ArrowRight, Target, User } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
+import { Logo } from '../components/Logo';
 
 export default function OnboardingPage() {
     const navigate = useNavigate();
@@ -21,16 +22,16 @@ export default function OnboardingPage() {
     // Form State Local
     const [formData, setFormData] = useState({
         email: '', instagram: '', whatsapp: '',
-        mission: '', enemy: '', pain: '', dream: '', dreamClient: '', method: ''
+        mission: '', enemy: '', pain: '', dream: '', dreamClient: '', method: '',
+        toneVoice: '', brandValues: '', offerDetails: '', differentiation: ''
     });
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
     const handleNext = () => {
         if (step === 1) {
-            // Validação Banal
             if (!formData.email || !formData.instagram) return alert("Preencha email e instagram");
             setBasicInfo({
                 email: formData.email,
@@ -38,9 +39,11 @@ export default function OnboardingPage() {
                 whatsapp: formData.whatsapp
             });
             setStep(2);
+        } else if (step === 2) {
+            if (!formData.dreamClient || !formData.pain) return alert("Preencha os dados do seu público.");
+            setStep(3);
         } else {
-            // Finalizar Onboarding DNS -> Ir para Coleta de Dados Manuais
-            if (!formData.mission) return alert("A Missão é obrigatória para a IA funcionar.");
+            if (!formData.mission || !formData.offerDetails) return alert("A Missão e Detalhes da Oferta são obrigatórios.");
 
             setLoading(true);
             setStrategy({
@@ -49,80 +52,87 @@ export default function OnboardingPage() {
                 pain: formData.pain,
                 dream: formData.dream,
                 dreamClient: formData.dreamClient,
-                method: formData.method
+                method: formData.method,
+                toneVoice: formData.toneVoice,
+                brandValues: formData.brandValues,
+                offerDetails: formData.offerDetails,
+                differentiation: formData.differentiation
             });
 
-            // Simula salvamento rápido
             setTimeout(() => {
                 setLoading(false);
-                navigate('/connect'); // Vamos reaproveitar essa rota para a Coleta de Dados Manuais
+                navigate('/connect');
             }, 1000);
         }
     };
 
     return (
-        <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-6 font-['Inter']">
+        <div className="min-h-screen bg-slate-950 text-slate-50 flex flex-col items-center justify-center p-6 antialiased">
 
-            {/* Progress Bar */}
-            <div className="w-full max-w-2xl mb-8 flex items-center justify-between px-4">
-                <div className={`flex flex-col items-center ${step >= 1 ? 'text-blue-500' : 'text-slate-600'}`}>
-                    <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center font-bold mb-2 ${step >= 1 ? 'border-blue-500 bg-blue-500/10' : 'border-slate-700'}`}>1</div>
-                    <span className="text-xs font-medium uppercase tracking-wider">Identidade</span>
+            {/* Background Blobs */}
+            <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-[400px] bg-primary/5 blur-[120px] -z-10" />
+
+            {/* Header / Logo */}
+            <div className="mb-12">
+                <Logo />
+            </div>
+
+            {/* Progress Wrapper */}
+            <div className="w-full max-w-xl mb-12 relative">
+                <div className="flex items-center justify-between relative z-10 px-2">
+                    <ProgressStep number={1} label="Identidade" active={step >= 1} current={step === 1} />
+                    <ProgressStep number={2} label="Psicologia" active={step >= 2} current={step === 2} />
+                    <ProgressStep number={3} label="Estratégia" active={step >= 3} current={step === 3} />
                 </div>
-                <div className={`flex-1 h-0.5 mx-4 ${step >= 2 ? 'bg-blue-500' : 'bg-slate-800'}`}></div>
-                <div className={`flex flex-col items-center ${step >= 2 ? 'text-blue-500' : 'text-slate-600'}`}>
-                    <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center font-bold mb-2 ${step >= 2 ? 'border-blue-500 bg-blue-500/10' : 'border-slate-700'}`}>2</div>
-                    <span className="text-xs font-medium uppercase tracking-wider">DNA da Marca</span>
-                </div>
-                <div className={`flex-1 h-0.5 mx-4 bg-slate-800`}></div>
-                <div className={`flex flex-col items-center text-slate-600`}>
-                    <div className="w-10 h-10 rounded-full border-2 border-slate-700 flex items-center justify-center font-bold mb-2 text-slate-500">3</div>
-                    <span className="text-xs font-medium uppercase tracking-wider">Dados</span>
+                {/* Connecting lines */}
+                <div className="absolute top-5 left-0 w-full h-[1px] bg-slate-800 -z-0">
+                    <div className={`h-full bg-primary transition-all duration-500`} style={{ width: step === 1 ? '0%' : step === 2 ? '50%' : '100%' }} />
                 </div>
             </div>
 
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 max-w-2xl w-full shadow-2xl">
+            <div className="card-premium max-w-2xl w-full shadow-2xl relative overflow-hidden">
+                {/* Glow effect for cards */}
+                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-3xl rounded-full" />
 
                 {step === 1 && (
-                    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <div className="text-center mb-8">
-                            <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-blue-500/20">
-                                <User className="w-8 h-8 text-blue-400" />
-                            </div>
-                            <h1 className="text-2xl font-bold text-white mb-2">Quem é você?</h1>
-                            <p className="text-slate-400">Dados básicos para criar sua conta.</p>
+                    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div className="text-center">
+                            <h2 className="text-2xl font-bold font-display mb-2">Primeiros Passos</h2>
+                            <p className="text-slate-400 text-sm">Dados básicos para personalizarmos sua experiência.</p>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-400 mb-2">Seu Instagram (sem @)</label>
-                                <div className="flex">
-                                    <span className="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-slate-700 bg-slate-800 text-slate-400">@</span>
+                        <div className="space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Instagram (sem @)</label>
+                                    <div className="flex group">
+                                        <span className="inline-flex items-center px-4 rounded-l-2xl border border-r-0 border-slate-800 bg-slate-900/50 text-slate-500 transition-colors group-focus-within:border-primary/50 group-focus-within:text-primary">@</span>
+                                        <input
+                                            name="instagram"
+                                            value={formData.instagram} onChange={handleChange}
+                                            placeholder="seu_perfil"
+                                            className="flex-1 px-4 py-4 bg-slate-900/50 border border-slate-800 rounded-r-2xl text-white placeholder-slate-700 outline-none focus:border-primary/50 focus:bg-slate-900 transition-all text-sm"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">WhatsApp</label>
                                     <input
-                                        name="instagram"
-                                        value={formData.instagram} onChange={handleChange}
-                                        placeholder="seu_perfil"
-                                        className="flex-1 min-w-0 block w-full px-3 py-3 bg-slate-950 border border-slate-700 rounded-r-lg text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                                        name="whatsapp"
+                                        value={formData.whatsapp} onChange={handleChange}
+                                        placeholder="Ex: 43 99999-9999"
+                                        className="w-full px-4 py-4 bg-slate-900/50 border border-slate-800 rounded-2xl text-white placeholder-slate-700 outline-none focus:border-primary/50 focus:bg-slate-900 transition-all text-sm"
                                     />
                                 </div>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-400 mb-2">WhatsApp</label>
-                                <input
-                                    name="whatsapp"
-                                    value={formData.whatsapp} onChange={handleChange}
-                                    placeholder="43991817404"
-                                    className="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-lg text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                                />
-                            </div>
-                            <div className="md:col-span-2">
-                                <label className="block text-sm font-medium text-slate-400 mb-2">E-mail de Login do Facebook (Para liberarmos seu acesso)</label>
+                            <div className="space-y-2">
+                                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">E-mail para Relatórios</label>
                                 <input
                                     type="email"
                                     name="email"
                                     value={formData.email} onChange={handleChange}
-                                    placeholder="drmgaviao@gmail.com"
-                                    className="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-lg text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                                    placeholder="Ex: contato@suaempresa.com"
+                                    className="w-full px-4 py-4 bg-slate-900/50 border border-slate-800 rounded-2xl text-white placeholder-slate-700 outline-none focus:border-primary/50 focus:bg-slate-900 transition-all text-sm"
                                 />
                             </div>
                         </div>
@@ -130,92 +140,159 @@ export default function OnboardingPage() {
                 )}
 
                 {step === 2 && (
-                    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                        <div className="text-center mb-10">
-                            <div className="w-20 h-20 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-white/10 shadow-xl">
-                                <Target className="w-10 h-10 text-indigo-400" />
-                            </div>
-                            <h1 className="text-3xl font-extrabold text-white mb-3 tracking-tight">Arquétipo & DNA</h1>
-                            <p className="text-slate-400 max-w-md mx-auto leading-relaxed">Defina a essência da sua marca para que nosso robô aprenda a falar o seu dialeto.</p>
+                    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div className="text-center">
+                            <h2 className="text-2xl font-bold font-display mb-2">Engenharia do Público</h2>
+                            <p className="text-slate-400 text-sm">A IA precisa entender a mente de quem você quer atingir.</p>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
-                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Cliente dos Sonhos</label>
+                                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Público Alvo (Persona)</label>
                                 <input
                                     name="dreamClient"
                                     value={formData.dreamClient} onChange={handleChange}
-                                    placeholder="Ex: Empresários que pensam fora da caixa..."
-                                    className="w-full px-5 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder-slate-700"
+                                    placeholder="Ex: Empresários SaaS faturando +10k"
+                                    className="w-full px-4 py-4 bg-slate-900/50 border border-slate-800 rounded-2xl text-white placeholder-slate-700 outline-none focus:border-primary/50 transition-all text-sm"
                                 />
                             </div>
-
                             <div className="space-y-2">
-                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Nome do Método/Empresa</label>
+                                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">O "Vilão" (Obstáculo)</label>
                                 <input
-                                    name="method"
-                                    value={formData.method} onChange={handleChange}
-                                    placeholder="Ex: Método Escala 10x"
-                                    className="w-full px-5 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder-slate-700"
+                                    name="enemy"
+                                    value={formData.enemy} onChange={handleChange}
+                                    placeholder="Ex: A falta de tempo ou algoritmos"
+                                    className="w-full px-4 py-4 bg-slate-900/50 border border-slate-800 rounded-2xl text-white placeholder-slate-700 outline-none focus:border-primary/50 transition-all text-sm"
                                 />
                             </div>
-
                             <div className="space-y-2">
-                                <label className="block text-xs font-bold text-red-500/80 uppercase tracking-widest ml-1">O Inferno (A Dor maior)</label>
+                                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">A Dor mais Profunda</label>
                                 <input
                                     name="pain"
                                     value={formData.pain} onChange={handleChange}
                                     placeholder="O que tira o sono dele?"
-                                    className="w-full px-5 py-4 bg-red-500/5 border border-red-500/10 rounded-2xl text-white focus:ring-2 focus:ring-red-500 outline-none transition-all placeholder-slate-700"
+                                    className="w-full px-4 py-4 bg-slate-900/50 border border-slate-800 rounded-2xl text-white placeholder-slate-700 outline-none focus:border-primary/50 transition-all text-sm"
                                 />
                             </div>
-
                             <div className="space-y-2">
-                                <label className="block text-xs font-bold text-green-500/80 uppercase tracking-widest ml-1">O Céu (O Sonho)</label>
+                                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">O Sonho (Destino final)</label>
                                 <input
                                     name="dream"
                                     value={formData.dream} onChange={handleChange}
-                                    placeholder="Onde ele quer chegar?"
-                                    className="w-full px-5 py-4 bg-green-500/5 border border-green-500/10 rounded-2xl text-white focus:ring-2 focus:ring-green-500 outline-none transition-all placeholder-slate-700"
+                                    placeholder="Como é a vida ideal dele?"
+                                    className="w-full px-4 py-4 bg-slate-900/50 border border-slate-800 rounded-2xl text-white placeholder-slate-700 outline-none focus:border-primary/50 transition-all text-sm"
                                 />
                             </div>
-
                             <div className="md:col-span-2 space-y-2">
-                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Missão & Promessa (O que você resolve?)</label>
+                                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Valores da Marca (Soul)</label>
                                 <textarea
-                                    name="mission"
+                                    name="brandValues"
                                     rows={2}
-                                    value={formData.mission} onChange={handleChange}
-                                    placeholder="Transformo X em Y através da tecnologia Z..."
-                                    className="w-full px-5 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder-slate-700 resize-none"
-                                />
-                            </div>
-
-                            <div className="md:col-span-2 space-y-2">
-                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Inimigo Comum (Contra quem lutamos?)</label>
-                                <input
-                                    name="enemy"
-                                    value={formData.enemy} onChange={handleChange}
-                                    placeholder="Ex: O algoritmo, as taxas, os gurus mentirosos..."
-                                    className="w-full px-5 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder-slate-700"
+                                    value={formData.brandValues} onChange={handleChange}
+                                    placeholder="Ex: Transparência, Velocidade, Resultados práticos..."
+                                    className="w-full px-4 py-4 bg-slate-900/50 border border-slate-800 rounded-2xl text-white placeholder-slate-700 outline-none focus:border-primary/50 transition-all text-sm resize-none"
                                 />
                             </div>
                         </div>
                     </div>
                 )}
 
-                <div className="mt-8 pt-6 border-t border-slate-800 flex justify-end">
+                {step === 3 && (
+                    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div className="text-center">
+                            <h2 className="text-2xl font-bold font-display mb-2">Diferenciação & Oferta</h2>
+                            <p className="text-slate-400 text-sm">Como você se destaca e o que você entrega ao mundo.</p>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Nome do Seu Método</label>
+                                <input
+                                    name="method"
+                                    value={formData.method} onChange={handleChange}
+                                    placeholder="Ex: Método Escala 10x"
+                                    className="w-full px-4 py-4 bg-slate-900/50 border border-slate-800 rounded-2xl text-white placeholder-slate-700 outline-none focus:border-primary/50 transition-all text-sm"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Tom de Voz</label>
+                                <select
+                                    name="toneVoice"
+                                    value={formData.toneVoice} onChange={handleChange}
+                                    className="w-full px-4 py-4 bg-slate-900/50 border border-slate-800 rounded-2xl text-white outline-none focus:border-primary/50 transition-all text-sm appearance-none"
+                                >
+                                    <option value="">Selecione um Tom</option>
+                                    <option value="Autoridade (Sério e Direto)">Autoridade (Sério e Direto)</option>
+                                    <option value="Amigável (Acessível e Inspirador)">Amigável (Inspirador)</option>
+                                    <option value="Provocador (Quebra de Padrão)">Provocador (Quebra de Padrão)</option>
+                                    <option value="Técnico (Focado em Dados)">Técnico (Dados)</option>
+                                    <option value="Minimalista (Curto e Grosso)">Minimalista</option>
+                                </select>
+                            </div>
+                            <div className="md:col-span-2 space-y-2">
+                                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest text-slate-400">O que você vende? (Sua Oferta)</label>
+                                <textarea
+                                    name="offerDetails"
+                                    rows={2}
+                                    value={formData.offerDetails} onChange={handleChange}
+                                    placeholder="Descreva seu produto, curso ou serviço principal..."
+                                    className="w-full px-4 py-4 bg-slate-900/50 border border-slate-800 rounded-2xl text-white placeholder-slate-700 outline-none focus:border-primary/50 transition-all text-sm resize-none"
+                                />
+                            </div>
+                            <div className="md:col-span-2 space-y-2">
+                                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Diferencial Único (Sua Unicidade)</label>
+                                <input
+                                    name="differentiation"
+                                    value={formData.differentiation} onChange={handleChange}
+                                    placeholder="Por que você e não a concorrência?"
+                                    className="w-full px-4 py-4 bg-slate-900/50 border border-slate-800 rounded-2xl text-white placeholder-slate-700 outline-none focus:border-primary/50 transition-all text-sm"
+                                />
+                            </div>
+                            <div className="md:col-span-2 space-y-2">
+                                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Missão & Promessa Única</label>
+                                <textarea
+                                    name="mission"
+                                    rows={2}
+                                    value={formData.mission} onChange={handleChange}
+                                    placeholder="Eu ajudo X a conseguir Y através de Z..."
+                                    className="w-full px-4 py-4 bg-slate-900/50 border border-slate-800 rounded-2xl text-white placeholder-slate-700 outline-none focus:border-primary/50 transition-all text-sm resize-none"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                <div className="mt-12 flex justify-between items-center">
+                    <p className="text-[11px] text-slate-600 font-medium">Leads AI &copy; 2026</p>
                     <button
                         onClick={handleNext}
                         disabled={loading}
-                        className="group bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold py-3 px-8 rounded-xl flex items-center gap-2 transition-all shadow-lg hover:shadow-blue-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="btn-primary flex items-center gap-2 text-sm py-3 px-10"
                     >
-                        {loading ? 'Salvando...' : (step === 1 ? 'Próximo Passo' : 'Finalizar Setup')}
-                        {!loading && <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />}
+                        {loading ? 'Processando DNA...' : (step < 3 ? 'Próximo Passo' : 'Gerar Estratégia')}
+                        {!loading && <ArrowRight className="w-4 h-4" />}
                     </button>
                 </div>
-
             </div>
+
+            <p className="mt-8 text-xs text-slate-600 text-center max-w-xs leading-relaxed">
+                Ao clicar em finalizar, nossa IA iniciará o processamento dos seus dados imediatamente para clonar sua voz de marca.
+            </p>
         </div>
     );
+}
+
+function ProgressStep({ number, label, active, current }: { number: number, label: string, active: boolean, current: boolean }) {
+    return (
+        <div className="flex flex-col items-center gap-2 relative z-10 transition-all duration-300">
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs border-2 transition-all ${current ? 'bg-primary border-primary text-slate-950 shadow-[0_0_15px_rgba(0,255,65,0.4)] ring-4 ring-primary/10' :
+                active ? 'bg-slate-900 border-primary text-primary' :
+                    'bg-slate-950 border-slate-800 text-slate-700'
+                }`}>
+                {number}
+            </div>
+            <span className={`text-[10px] uppercase tracking-widest font-bold transition-colors ${current ? 'text-primary' : active ? 'text-slate-400' : 'text-slate-700'
+                }`}>{label}</span>
+        </div>
+    )
 }

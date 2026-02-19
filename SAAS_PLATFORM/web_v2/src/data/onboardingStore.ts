@@ -8,13 +8,17 @@ export interface OnboardingState {
     instagram: string;
     whatsapp: string;
 
-    // Step 2: Alma da Marca (DNA)
+    // Step 2: Alma da Marca (DNA Profundo)
     mission: string;
     enemy: string;
     pain: string;
-    dream: string;        // Novo: Qual o SONHO (Céu)?
-    dreamClient: string;  // Novo: Quem é o cliente dos sonhos?
+    dream: string;
+    dreamClient: string;
     method: string;
+    toneVoice: string;     // Novo: Autoridade, Amigável, etc.
+    brandValues: string;   // Novo: Valores pilares
+    offerDetails: string;  // Novo: O que exatamente vende?
+    differentiation: string; // Novo: Por que você e não o outro?
 
     // Step 3: Posts Manuais (Conforme PDF)
     posts: Array<{
@@ -52,6 +56,10 @@ export const useOnboardingStore = create<OnboardingState>()(
             dream: '',
             dreamClient: '',
             method: '',
+            toneVoice: '',
+            brandValues: '',
+            offerDetails: '',
+            differentiation: '',
             posts: [],
             accessToken: null,
             accountId: null,
@@ -64,6 +72,7 @@ export const useOnboardingStore = create<OnboardingState>()(
                 plan: null,
                 email: '', instagram: '', whatsapp: '',
                 mission: '', enemy: '', pain: '', dream: '', dreamClient: '', method: '',
+                toneVoice: '', brandValues: '', offerDetails: '', differentiation: '',
                 posts: [],
                 accessToken: null, accountId: null
             }),

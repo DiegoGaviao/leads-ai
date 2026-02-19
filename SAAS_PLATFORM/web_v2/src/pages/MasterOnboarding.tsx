@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Phone, Mail, Send, CheckCircle2 } from 'lucide-react';
+import { Phone, Mail, Send, CheckCircle2, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const API_URL = import.meta.env.VITE_API_URL || "https://leads-ai-v2.onrender.com";
@@ -19,7 +19,6 @@ export default function MasterOnboardingPage() {
     const handleSubmit = async () => {
         setLoading(true);
         try {
-            // Salva no banco e notifica admin
             const res = await fetch(`${API_URL}/auth/master/notify`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -27,7 +26,7 @@ export default function MasterOnboardingPage() {
             });
 
             if (res.ok) {
-                setStep(2); // Sucesso
+                setStep(2);
             }
         } catch (err) {
             console.error(err);
@@ -38,79 +37,100 @@ export default function MasterOnboardingPage() {
 
     if (step === 2) {
         return (
-            <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-6 text-center">
-                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mb-6">
-                    <CheckCircle2 className="w-12 h-12 text-green-500" />
+            <div className="min-h-screen bg-slate-950 text-slate-50 flex flex-col items-center justify-center p-6 text-center antialiased">
+                <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-[400px] bg-primary/10 blur-[120px] -z-10" />
+
+                <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="card-premium max-w-lg w-full py-16">
+                    <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-8 border border-primary/20">
+                        <CheckCircle2 className="w-10 h-10 text-primary" />
+                    </div>
+                    <h1 className="text-3xl font-bold mb-4 font-display">Tudo pronto!</h1>
+                    <p className="text-slate-400 text-base leading-relaxed mb-10 px-6">
+                        Recebemos sua solicitação. Nossa equipe entrará em contato via <b>{formData.contactMethod}</b> em breve para conectar sua conta e iniciar a análise profunda.
+                    </p>
+                    <button onClick={() => navigate('/')} className="text-primary hover:text-white font-bold tracking-widest uppercase text-[11px] transition-colors">
+                        Voltar para a Home
+                    </button>
                 </motion.div>
-                <h1 className="text-3xl font-bold mb-4 tracking-tight text-white">Pronto, mestre!</h1>
-                <p className="text-slate-400 max-w-md text-lg leading-relaxed">
-                    Recebemos seus dados. Nossa equipe entrará em contato em breve via <b>{formData.contactMethod}</b> para conectar sua conta e iniciar a análise profunda de todo o seu histórico.
-                </p>
-                <button onClick={() => navigate('/')} className="mt-8 text-blue-400 hover:text-blue-300 font-medium">Voltar para a Home</button>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-6 font-['Inter']">
-            <div className="w-full max-w-xl bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl">
-                <div className="text-center mb-10">
-                    <div className="w-16 h-16 bg-blue-500/10 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-blue-500/20">
-                        <CheckCircle2 className="w-8 h-8 text-blue-400" />
+        <div className="min-h-screen bg-slate-950 text-slate-50 flex flex-col items-center justify-center p-6 antialiased">
+            <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-3xl h-[400px] bg-primary/5 blur-[120px] -z-10" />
+
+            <div className="card-premium max-w-xl w-full p-10 md:p-14">
+                <div className="text-center mb-12">
+                    <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-primary/20 shadow-premium">
+                        <Sparkles className="w-8 h-8 text-primary" />
                     </div>
-                    <h1 className="text-3xl font-bold mb-2 tracking-tight">Bem-vindo ao Master Data</h1>
-                    <p className="text-slate-400">Vamos conectar seus dados para análise total.</p>
+                    <h1 className="text-3xl font-bold mb-3 font-display tracking-tight">Conexão Master</h1>
+                    <p className="text-slate-400 text-sm">Vamos habilitar sua análise total de dados.</p>
                 </div>
 
-                <div className="space-y-6">
-                    <div>
-                        <label className="block text-sm font-bold text-slate-300 mb-2 uppercase tracking-wider">Como prefere ser contatado?</label>
+                <div className="space-y-8">
+                    <div className="space-y-3">
+                        <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest ml-1">Como prefere ser contatado?</label>
                         <div className="grid grid-cols-2 gap-4">
-                            <button
+                            <ContactTab
+                                active={formData.contactMethod === 'whatsapp'}
                                 onClick={() => setFormData({ ...formData, contactMethod: 'whatsapp' })}
-                                className={`flex items-center justify-center gap-2 p-4 rounded-xl border transition-all ${formData.contactMethod === 'whatsapp' ? 'bg-blue-600 border-blue-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-500'}`}
-                            >
-                                <Phone className="w-4 h-4" /> WhatsApp
-                            </button>
-                            <button
+                                icon={<Phone className="w-4 h-4" />}
+                                label="WhatsApp"
+                            />
+                            <ContactTab
+                                active={formData.contactMethod === 'email'}
                                 onClick={() => setFormData({ ...formData, contactMethod: 'email' })}
-                                className={`flex items-center justify-center gap-2 p-4 rounded-xl border transition-all ${formData.contactMethod === 'email' ? 'bg-blue-600 border-blue-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-500'}`}
-                            >
-                                <Mail className="w-4 h-4" /> E-mail
-                            </button>
+                                icon={<Mail className="w-4 h-4" />}
+                                label="E-mail"
+                            />
                         </div>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-bold text-slate-300 mb-2 uppercase tracking-wider">Seu {formData.contactMethod === 'whatsapp' ? 'WhatsApp' : 'E-mail'}</label>
+                    <div className="space-y-3">
+                        <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest ml-1">Seu {formData.contactMethod === 'whatsapp' ? 'WhatsApp' : 'E-mail'}</label>
                         <input
-                            placeholder={formData.contactMethod === 'whatsapp' ? '43 99181-7404' : 'seu@email.com'}
+                            placeholder={formData.contactMethod === 'whatsapp' ? 'Ex: 43 99999-9999' : 'seu@email.com'}
                             value={formData.contactValue}
                             onChange={(e) => setFormData({ ...formData, contactValue: e.target.value })}
-                            className="w-full px-4 py-4 bg-slate-950 border border-slate-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                            className="w-full px-5 py-4 bg-slate-950 border border-slate-900 rounded-2xl outline-none focus:border-primary/50 transition-all text-sm placeholder-slate-800"
                         />
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-bold text-slate-300 mb-2 uppercase tracking-wider text-slate-300">E-mail de Login no Facebook</label>
-                        <p className="text-xs text-slate-500 mb-2">Pode ser o mesmo que você usa para acessar o Gerenciador de Anúncios.</p>
+                    <div className="space-y-3">
+                        <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest ml-1">E-mail de Login do Facebook</label>
                         <input
                             placeholder="exemplo@login.com"
                             value={formData.fbEmail}
                             onChange={(e) => setFormData({ ...formData, fbEmail: e.target.value })}
-                            className="w-full px-4 py-4 bg-slate-950 border border-slate-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                            className="w-full px-5 py-4 bg-slate-950 border border-slate-900 rounded-2xl outline-none focus:border-primary/50 transition-all text-sm placeholder-slate-800"
                         />
+                        <p className="px-1 text-[10px] text-slate-600 leading-relaxed italic">Usado apenas para liberar permissão no Gerenciador de Anúncios.</p>
                     </div>
 
                     <button
                         onClick={handleSubmit}
                         disabled={loading || !formData.contactValue || !formData.fbEmail}
-                        className="w-full py-5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-lg rounded-2xl shadow-xl shadow-blue-500/20 flex items-center justify-center gap-2 transition-all hover:scale-[1.02] disabled:opacity-50"
+                        className="btn-primary w-full py-5 text-base flex items-center justify-center gap-3 transition-all disabled:opacity-50 mt-4"
                     >
-                        {loading ? "Enviando..." : <>Solicitar Conexão Master <Send className="w-5 h-5" /></>}
+                        {loading ? "Enviando..." : <>Solicitar Ativação Master <Send className="w-4 h-4" /></>}
                     </button>
                 </div>
             </div>
         </div>
     );
+}
+
+function ContactTab({ active, onClick, icon, label }: any) {
+    return (
+        <button
+            onClick={onClick}
+            className={`flex items-center justify-center gap-2 p-4 rounded-2xl border transition-all text-sm font-bold ${active
+                ? 'bg-slate-900 border-slate-800 text-slate-100 shadow-premium'
+                : 'bg-transparent border-transparent text-slate-600 hover:text-slate-400 hover:bg-slate-950'}`}
+        >
+            {icon} {label}
+        </button>
+    )
 }

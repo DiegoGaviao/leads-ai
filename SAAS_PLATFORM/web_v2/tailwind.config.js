@@ -6,6 +6,10 @@ export default {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+        display: ['Plus Jakarta Sans', 'Inter', 'system-ui', 'sans-serif'],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -13,30 +17,32 @@ export default {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: "#8B5CF6",
-          foreground: "#FFFFFF",
+          DEFAULT: "#00FF41", // Dhawk Electric Green
+          foreground: "#050505",
         },
         secondary: {
-          DEFAULT: "#EC4899",
+          DEFAULT: "#004D1A", // Deep Emerald
           foreground: "#FFFFFF",
         },
         accent: {
-          DEFAULT: "#F59E0B",
-          foreground: "#FFFFFF",
+          DEFAULT: "#00FF41",
+          foreground: "#050505",
         },
-        muted: {
-          DEFAULT: "#1E293B",
-          foreground: "#94A3B8",
-        },
+        slate: {
+          950: "#050505", // Dhawk Obsidian
+          900: "#0D0D0D",
+          800: "#1A1A1A",
+        }
       },
       borderRadius: {
-        lg: "0.75rem",
-        md: "0.5rem",
-        sm: "0.25rem",
+        xl: "1rem",
+        "2xl": "1.5rem",
+        "3xl": "2rem",
       },
-      animation: {
-        "pulse-slow": "pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-      },
+      boxShadow: {
+        'premium': '0 0 50px -12px rgba(0, 0, 0, 0.5)',
+        'glow': '0 0 20px -5px rgba(79, 70, 229, 0.3)',
+      }
     },
   },
   plugins: [],
