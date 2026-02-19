@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Phone, Mail, Send, CheckCircle2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-const API_URL = import.meta.env.VITE_API_URL || "https://leads-ai-backend.onrender.com";
+const API_URL = import.meta.env.VITE_API_URL || "https://leads-ai-v2.onrender.com";
 
 export default function MasterOnboardingPage() {
     const navigate = useNavigate();

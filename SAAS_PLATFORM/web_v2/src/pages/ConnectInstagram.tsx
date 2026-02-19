@@ -4,7 +4,7 @@ import { useOnboardingStore } from '../data/onboardingStore';
 import { Plus, Minus, Send, Link as LinkIcon, BarChart2, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const API_URL = import.meta.env.VITE_API_URL || "https://leads-ai-backend.onrender.com";
+const API_URL = import.meta.env.VITE_API_URL || "https://leads-ai-v2.onrender.com";
 
 export default function ManualDataEntryPage() {
     const navigate = useNavigate();

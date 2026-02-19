@@ -37,6 +37,27 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Modelos Pydantic (Entrada de Dados)
+class ToneOfVoice(BaseModel):
+    nao_sou: str
+    sou: str
+
+class PostData(BaseModel):
+    tema: str
+    views: Union[str, int]
+    likes: Union[str, int] = 0
+    saves: Union[str, int] = 0
+    comments: Union[str, int] = 0
+
+class OnboardingRequest(BaseModel):
+    instagram: str
+    email: str
+    missao: str
+    inimigo: str
+    dor_cliente: str
+    metodo_nome: str
+    posts: List[PostData]
+
 @app.post("/analyze")
 async def analyze_strategy(req: OnboardingRequest, authorization: Optional[str] = Header(None)):
     """
