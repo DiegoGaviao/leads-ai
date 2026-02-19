@@ -57,12 +57,15 @@ export default function ManualDataEntryPage() {
                 })
             });
 
-            if (!res.ok) throw new Error("Falha ao salvar dados.");
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.detail || "Falha ao salvar dados.");
+            }
 
             setIsFinished(true);
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
-            alert("Erro ao salvar dados. Verifique sua conexão.");
+            alert(`Erro: ${err.message}`);
         } finally {
             setIsSaving(false);
         }
