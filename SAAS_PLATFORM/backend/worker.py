@@ -18,7 +18,8 @@ load_dotenv()
 
 # Config Resend
 resend.api_key = os.getenv("RESEND_API_KEY") or "re_your_api_key_placeholder"
-from_addr = os.getenv("EMAIL_FROM", "Leads AI <onboarding@leads-ai.dhawk.com.br>")
+# Usamos onboarding@resend.dev como fallback seguro para testes
+from_addr = os.getenv("EMAIL_FROM", "Leads AI <onboarding@resend.dev>")
 
 print("🚀 INICIANDO WORKER LEADS AI (Híbrido - Suporta Schema Novo e Antigo)...") 
 

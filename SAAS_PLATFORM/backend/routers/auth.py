@@ -27,17 +27,17 @@ class PostEntry(BaseModel):
     conversions: Optional[str] = "0"
 
 class OnboardingCompleteRequest(BaseModel):
-    email: str
-    instagram: str
+    email: Optional[str] = ""
+    instagram: Optional[str] = ""
     whatsapp: Optional[str] = None
-    mission: str
-    enemy: str
-    pain: str
-    dream: Optional[str] = None
-    dreamClient: Optional[str] = None
-    method: Optional[str] = None
-    facebook_token: str 
-    instagram_id: str
+    mission: Optional[str] = ""
+    enemy: Optional[str] = ""
+    pain: Optional[str] = ""
+    dream: Optional[str] = ""
+    dreamClient: Optional[str] = ""
+    method: Optional[str] = ""
+    facebook_token: Optional[str] = "manual_entry" 
+    instagram_id: Optional[str] = "manual_entry"
     manual_posts: Optional[List[PostEntry]] = None
 
 @router.post("/facebook/exchange")
@@ -85,7 +85,8 @@ async def complete_onboarding(data: OnboardingCompleteRequest, background_tasks:
     """
     Salva a marca no Supabase e os posts manuais se existirem.
     """
-    logging.info(f"🚀 Criando marca (Modo Fluxo PDF): {data.instagram}")
+    logging.info(f"🚀 Recebendo Onboarding: {data.instagram} | Posts: {len(data.manual_posts) if data.manual_posts else 0}")
+    logging.info(f"Payload: {data.dict()}")
     supabase = get_supabase_client()
     
     try:
@@ -97,6 +98,8 @@ async def complete_onboarding(data: OnboardingCompleteRequest, background_tasks:
             "enemy": data.enemy,
             "dor_cliente": data.pain,
             "method_name": data.method,
+            "dream_point": data.dream,
+            "dream_client": data.dreamClient,
             "tone_voice_matrix": {
                 "dream": data.dream,
                 "dreamClient": data.dreamClient
