@@ -250,12 +250,21 @@ async def refresh_posts(req: RefreshPostsRequest):
     """
     supabase = get_supabase_client()
 
-    brand_res = (
-        supabase.table("leads_ai_brands")
-        .select("id, instagram_business_id, facebook_access_token")
-        .eq("instagram_handle", req.instagram_handle)
-        .execute()
-    )
+    try:
+        # Selecionamos todas as colunas para não quebrar em ambientes com schema antigo.
+        # Se os campos de token/id não existirem, tratamos com erro 400 mais claro abaixo.
+        brand_res = (
+            supabase.table("leads_ai_brands")
+            .select("*")
+            .eq("instagram_handle", req.instagram_handle)
+            .execute()
+        )
+    except Exception as e:
+        logging.error(f"❌ Erro ao buscar marca para refresh: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Falha ao consultar leads_ai_brands. Verifique se a migration de auth foi aplicada.",
+        )
 
     if not brand_res.data:
         raise HTTPException(status_code=404, detail="Marca não encontrada para este instagram_handle.")
@@ -264,6 +273,12 @@ async def refresh_posts(req: RefreshPostsRequest):
     brand_id = brand.get("id")
     account_id = brand.get("instagram_business_id")
     token = brand.get("facebook_access_token")
+
+    if "instagram_business_id" not in brand or "facebook_access_token" not in brand:
+        raise HTTPException(
+            status_code=400,
+            detail="Schema desatualizado: faltam colunas instagram_business_id/facebook_access_token em leads_ai_brands. Rode a migration 02_auth_migration.sql.",
+        )
 
     if not account_id or account_id == "manual_entry":
         raise HTTPException(
