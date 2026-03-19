@@ -292,33 +292,40 @@ async def refresh_posts(req: RefreshPostsRequest):
             detail="facebook_access_token está vazio. A marca precisa se conectar novamente no onboarding.",
         )
 
-    # 1) Re-scans dos posts e upsert na tabela de leads_ai_posts
-    # Usamos o mesmo método do onboarding.
-    posts = fb_client.get_posts_data(account_id, token, limit=req.limit or 12)
-    logging.info(f"🕵️ Re-scan iniciado ({req.instagram_handle}) - {len(posts)} posts")
+    try:
+        # 1) Re-scan dos posts e upsert na tabela leads_ai_posts.
+        posts = fb_client.get_posts_data(account_id, token, limit=req.limit or 12)
+        logging.info(f"🕵️ Re-scan iniciado ({req.instagram_handle}) - {len(posts)} posts")
 
-    db_posts = []
-    for p in posts:
-        db_posts.append({
-            "brand_id": brand_id,
-            "external_id": p["external_id"],
-            "media_type": p.get("type", ""),
-            "caption": p.get("full_caption", ""),
-            "permalink": p.get("link", ""),
-            "timestamp": p.get("date"),
-            "likes": p.get("likes", 0),
-            "comments": p.get("comments", 0),
-            "shares": p.get("shares", 0),
-            "saves": p.get("saves", 0),
-            "views": p.get("views", 0),
-            "engagement_score": p.get("interactions", 0),
-        })
+        db_posts = []
+        for p in posts:
+            db_posts.append({
+                "brand_id": brand_id,
+                "external_id": p["external_id"],
+                "media_type": p.get("type", ""),
+                "caption": p.get("full_caption", ""),
+                "permalink": p.get("link", ""),
+                "timestamp": p.get("date"),
+                "likes": p.get("likes", 0),
+                "comments": p.get("comments", 0),
+                "shares": p.get("shares", 0),
+                "saves": p.get("saves", 0),
+                "views": p.get("views", 0),
+                "engagement_score": p.get("interactions", 0),
+            })
 
-    if db_posts:
-        supabase.table("leads_ai_posts").upsert(db_posts, on_conflict="external_id").execute()
+        if db_posts:
+            supabase.table("leads_ai_posts").upsert(db_posts, on_conflict="external_id").execute()
 
-    # 2) Opcional: regen estratégia (apaga estratégia atual para o worker refazer)
-    if req.regen_strategy and brand_id:
-        supabase.table("leads_ai_strategies").delete().eq("brand_id", brand_id).execute()
+        # 2) Opcional: regen estratégia (apaga estratégia atual para o worker refazer)
+        if req.regen_strategy and brand_id:
+            supabase.table("leads_ai_strategies").delete().eq("brand_id", brand_id).execute()
+
+    except Exception as e:
+        logging.error(f"❌ Falha no refresh_posts ({req.instagram_handle}): {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Falha ao atualizar posts/estratégia. Verifique schema/tokens da marca. Erro: {str(e)}",
+        )
 
     return {"success": True, "brand_id": brand_id, "posts_upserted": len(db_posts or [])}
