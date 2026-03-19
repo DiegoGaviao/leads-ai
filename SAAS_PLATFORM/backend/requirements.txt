@@ -5,7 +5,7 @@ openai==1.51.2
 # openai<2 ainda usa parâmetro `proxies` no client HTTP;
 # httpx>=0.28 remove esse parâmetro e quebra em runtime.
 httpx==0.27.2
-requests==2.32.3
+requests==2.31.0
 huggingface_hub==0.25.2
 python-dotenv==1.0.1
 supabase==2.8.1
