@@ -10,7 +10,8 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 fb_client = FacebookClient()
 
 class AuthExchangeRequest(BaseModel):
-    access_token: str # Aqui recebemos o CODE do frontend
+    access_token: str  # MVP: o frontend envia o `code` aqui (nome mantido por compatibilidade)
+    redirect_uri: Optional[str] = None
 
 class MasterNotifyRequest(BaseModel):
     contactMethod: str
@@ -36,9 +37,18 @@ class OnboardingCompleteRequest(BaseModel):
     dream: Optional[str] = ""
     dreamClient: Optional[str] = ""
     method: Optional[str] = ""
+    toneVoice: Optional[str] = ""
+    brandValues: Optional[str] = ""
+    offerDetails: Optional[str] = ""
+    differentiation: Optional[str] = ""
     facebook_token: Optional[str] = "manual_entry" 
     instagram_id: Optional[str] = "manual_entry"
     manual_posts: Optional[List[PostEntry]] = None
+
+class RefreshPostsRequest(BaseModel):
+    instagram_handle: str
+    limit: Optional[int] = 12
+    regen_strategy: Optional[bool] = True
 
 @router.post("/facebook/exchange")
 async def exchange_token(req: AuthExchangeRequest):
@@ -49,18 +59,31 @@ async def exchange_token(req: AuthExchangeRequest):
     1. Se vier code, trocamos (TODO).
     2. Se vier token, validamos.
     """
-    logging.info(f"🔄 Trocando token... {req.access_token[:5]}***")
+    logging.info(f"🔄 Trocando OAuth code... {req.access_token[:5]}***")
+
+    if not req.redirect_uri:
+        return {
+            "success": False,
+            "message": "redirect_uri é obrigatório para trocar o code por access_token.",
+        }
+
+    # Troca code -> access_token (OAuth real)
+    try:
+        token = fb_client.exchange_code_for_access_token(req.access_token, req.redirect_uri)
+    except Exception as e:
+        logging.error(f"❌ Erro ao trocar code por token: {e}")
+        return {"success": False, "message": str(e)}
     
     # Busca contas para validar o token
     try:
         # Se o token for válido, retorna as contas
-        accounts = fb_client.get_instagram_accounts(req.access_token)
+        accounts = fb_client.get_instagram_accounts(token)
         if not accounts:
             return {"success": False, "message": "Nenhuma conta Instagram Business encontrada."}
             
         return {
             "success": True, 
-            "token": req.access_token, # Retorna o mesmo token (MVP)
+            "token": token,
             "accounts": accounts
         }
     except Exception as e:
@@ -94,15 +117,24 @@ async def complete_onboarding(data: OnboardingCompleteRequest, background_tasks:
         brand_data = {
             "email": data.email,
             "instagram_handle": data.instagram,
+            # Persistimos para permitir refresh sem precisar reautorizar o cliente.
+            # Se ela já conectou antes, esse campo pode estar vazio e será necessário reconectar 1x.
+            "facebook_access_token": data.facebook_token,
+            "instagram_business_id": data.instagram_id,
             "mission": data.mission,
             "enemy": data.enemy,
             "dor_cliente": data.pain,
             "method_name": data.method,
             "dream_point": data.dream,
             "dream_client": data.dreamClient,
+            "tone_voice": data.toneVoice,
             "tone_voice_matrix": {
                 "dream": data.dream,
-                "dreamClient": data.dreamClient
+                "dreamClient": data.dreamClient,
+                "toneVoice": data.toneVoice,
+                "brandValues": data.brandValues,
+                "offerDetails": data.offerDetails,
+                "differentiation": data.differentiation
             }
         }
         
@@ -142,6 +174,11 @@ async def complete_onboarding(data: OnboardingCompleteRequest, background_tasks:
                 if db_posts:
                     post_res = supabase.table("leads_ai_posts").upsert(db_posts, on_conflict="external_id").execute()
                     logging.info(f"✅ Posts Res: {len(post_res.data)} posts salvos.")
+
+            # 3. Limpar estratégia antiga (se existir) para forçar o worker a gerar uma nova
+            # Isso resolve o problema de preencher 2x e o worker ignorar a segunda vez.
+            supabase.table("leads_ai_strategies").delete().eq("brand_id", brand_id).execute()
+            logging.info(f"♻️ Estratégias antigas limpas para {data.instagram}. Worker será acionado.")
 
         # 3. Disparar Scan em Background (Opcional se for manual_entry, mas enviamos para consistência)
         if data.instagram_id != "manual_entry":
@@ -202,3 +239,71 @@ async def run_initial_scan(account_id: str, token: str):
             
     except Exception as e:
         logging.error(f"❌ Falha no Scan Background: {e}")
+
+
+@router.post("/posts/refresh")
+async def refresh_posts(req: RefreshPostsRequest):
+    """
+    Re-roda o Scout para atualizar a base de posts do cliente.
+    - Usa token/account_id persistidos em `leads_ai_brands` (após re-conexão 1x).
+    - Opcional: apaga a estratégia atual para forçar reprocessamento pelo worker.
+    """
+    supabase = get_supabase_client()
+
+    brand_res = (
+        supabase.table("leads_ai_brands")
+        .select("id, instagram_business_id, facebook_access_token")
+        .eq("instagram_handle", req.instagram_handle)
+        .execute()
+    )
+
+    if not brand_res.data:
+        raise HTTPException(status_code=404, detail="Marca não encontrada para este instagram_handle.")
+
+    brand = brand_res.data[0]
+    brand_id = brand.get("id")
+    account_id = brand.get("instagram_business_id")
+    token = brand.get("facebook_access_token")
+
+    if not account_id or account_id == "manual_entry":
+        raise HTTPException(
+            status_code=400,
+            detail="instagram_business_id está vazio. A marca precisa se conectar novamente no onboarding.",
+        )
+
+    if not token or token == "manual_entry":
+        raise HTTPException(
+            status_code=400,
+            detail="facebook_access_token está vazio. A marca precisa se conectar novamente no onboarding.",
+        )
+
+    # 1) Re-scans dos posts e upsert na tabela de leads_ai_posts
+    # Usamos o mesmo método do onboarding.
+    posts = fb_client.get_posts_data(account_id, token, limit=req.limit or 12)
+    logging.info(f"🕵️ Re-scan iniciado ({req.instagram_handle}) - {len(posts)} posts")
+
+    db_posts = []
+    for p in posts:
+        db_posts.append({
+            "brand_id": brand_id,
+            "external_id": p["external_id"],
+            "media_type": p.get("type", ""),
+            "caption": p.get("full_caption", ""),
+            "permalink": p.get("link", ""),
+            "timestamp": p.get("date"),
+            "likes": p.get("likes", 0),
+            "comments": p.get("comments", 0),
+            "shares": p.get("shares", 0),
+            "saves": p.get("saves", 0),
+            "views": p.get("views", 0),
+            "engagement_score": p.get("interactions", 0),
+        })
+
+    if db_posts:
+        supabase.table("leads_ai_posts").upsert(db_posts, on_conflict="external_id").execute()
+
+    # 2) Opcional: regen estratégia (apaga estratégia atual para o worker refazer)
+    if req.regen_strategy and brand_id:
+        supabase.table("leads_ai_strategies").delete().eq("brand_id", brand_id).execute()
+
+    return {"success": True, "brand_id": brand_id, "posts_upserted": len(db_posts or [])}

@@ -2,6 +2,7 @@ import requests
 import logging
 from typing import Dict, List, Optional
 import os
+import json
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -47,6 +48,31 @@ class FacebookClient:
         except requests.exceptions.RequestException as e:
             logging.error(f"❌ Erro ao buscar contas IG: {e}")
             return []
+
+    def exchange_code_for_access_token(self, code: str, redirect_uri: str) -> str:
+        """
+        Troca o `code` do OAuth do Facebook por um `access_token`.
+
+        Observação (MVP): o frontend inicia o OAuth e retorna o `code` via redirect.
+        Essa troca acontece aqui no backend usando APP_SECRET.
+        """
+        endpoint = f"{self.base_url}/oauth/access_token"
+        params = {
+            "client_id": self.app_id,
+            "redirect_uri": redirect_uri,
+            "client_secret": self.app_secret,
+            "code": code,
+        }
+
+        response = requests.get(endpoint, params=params, timeout=30)
+        response.raise_for_status()
+        data = response.json() or {}
+
+        token = data.get("access_token")
+        if not token:
+            raise ValueError(f"Resposta inesperada do OAuth (sem access_token): {data}")
+
+        return token
 
     def get_posts_data(self, ig_account_id: str, access_token: str, limit: int = 50) -> List[Dict]:
         """
@@ -104,10 +130,13 @@ class FacebookClient:
                 return []
 
             # Enviar Batch Request (POST na raiz graph)
+            # Graph API espera o parâmetro `batch` no body (form-encoded).
+            # Usar JSON aqui pode quebrar silenciosamente em alguns cenários.
             batch_response = requests.post(
                 f"https://graph.facebook.com/{self.api_version}/",
                 params={"access_token": access_token},
-                json={"batch": batch_payload}
+                data={"batch": json.dumps(batch_payload)},
+                timeout=30
             )
             batch_response.raise_for_status()
             batch_results = batch_response.json()
@@ -116,7 +145,7 @@ class FacebookClient:
             for i, result in enumerate(batch_results):
                 media = media_items[i]
                 code = result.get("code")
-                body = requests.utils.json.loads(result.get("body", "{}"))
+                body = json.loads(result.get("body", "{}"))
                 
                 stats = {
                     "reach": 0, "saved": 0, "shares": 0, "profile_visits": 0, 
