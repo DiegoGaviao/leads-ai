@@ -37,10 +37,10 @@ class OnboardingCompleteRequest(BaseModel):
     dream: Optional[str] = ""
     dreamClient: Optional[str] = ""
     method: Optional[str] = ""
-    toneVoice: Optional[str] = ""
-    brandValues: Optional[str] = ""
-    offerDetails: Optional[str] = ""
-    differentiation: Optional[str] = ""
+    toneVoice: Optional[str] = None
+    brandValues: Optional[str] = None
+    offerDetails: Optional[str] = None
+    differentiation: Optional[str] = None
     facebook_token: Optional[str] = "manual_entry" 
     instagram_id: Optional[str] = "manual_entry"
     manual_posts: Optional[List[PostEntry]] = None
@@ -123,6 +123,22 @@ async def complete_onboarding(data: OnboardingCompleteRequest, background_tasks:
         if data.instagram_id and data.instagram_id != "manual_entry":
             la_instagram_business_id = data.instagram_id
 
+        # Evita quebrar onboarding quando a base não possui colunas de tone/voice.
+        tone_voice_value = None
+        if data.toneVoice and isinstance(data.toneVoice, str) and data.toneVoice.strip():
+            tone_voice_value = data.toneVoice.strip()
+
+        tone_voice_matrix_value = None
+        if tone_voice_value:
+            tone_voice_matrix_value = {
+                "dream": data.dream,
+                "dreamClient": data.dreamClient,
+                "toneVoice": data.toneVoice,
+                "brandValues": data.brandValues,
+                "offerDetails": data.offerDetails,
+                "differentiation": data.differentiation,
+            }
+
         # 1. Preparar dados para leads_ai_brands
         brand_data = {
             "email": data.email,
@@ -137,19 +153,21 @@ async def complete_onboarding(data: OnboardingCompleteRequest, background_tasks:
             "method_name": data.method,
             "dream_point": data.dream,
             "dream_client": data.dreamClient,
-            "tone_voice": data.toneVoice,
-            "tone_voice_matrix": {
-                "dream": data.dream,
-                "dreamClient": data.dreamClient,
-                "toneVoice": data.toneVoice,
-                "brandValues": data.brandValues,
-                "offerDetails": data.offerDetails,
-                "differentiation": data.differentiation
-            }
+            "tone_voice": tone_voice_value,
+            "tone_voice_matrix": tone_voice_matrix_value,
         }
         
         # Upsert brand
-        clean_brand_data = {k: v for k, v in brand_data.items() if v is not None}
+        # Também removemos campos que podem existir no schema legado, mas que recebam string vazia.
+        clean_brand_data = {}
+        for k, v in brand_data.items():
+            if v is None:
+                continue
+            if isinstance(v, str) and not v.strip():
+                continue
+            if k == "tone_voice" and tone_voice_value is None:
+                continue
+            clean_brand_data[k] = v
         brand_res = supabase.table("leads_ai_brands").upsert(clean_brand_data, on_conflict="instagram_handle").execute()
         
         logging.info(f"Brand Res: {brand_res.data}")
