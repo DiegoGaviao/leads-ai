@@ -113,14 +113,24 @@ async def complete_onboarding(data: OnboardingCompleteRequest, background_tasks:
     supabase = get_supabase_client()
     
     try:
+        # Não sobrescrevemos tokens/IDs existentes quando vierem como "manual_entry".
+        # Isso evita que o frontend (que às vezes finaliza com manual_entry) apague um OAuth válido.
+        la_facebook_access_token = None
+        if data.facebook_token and data.facebook_token != "manual_entry":
+            la_facebook_access_token = data.facebook_token
+
+        la_instagram_business_id = None
+        if data.instagram_id and data.instagram_id != "manual_entry":
+            la_instagram_business_id = data.instagram_id
+
         # 1. Preparar dados para leads_ai_brands
         brand_data = {
             "email": data.email,
             "instagram_handle": data.instagram,
             # Padrão do projeto no Supabase compartilhado: prefixo `la_`.
             # Mantemos semântica igual: persistir token/id para permitir refresh sem reconectar toda vez.
-            "la_facebook_access_token": data.facebook_token,
-            "la_instagram_business_id": data.instagram_id,
+            "la_facebook_access_token": la_facebook_access_token,
+            "la_instagram_business_id": la_instagram_business_id,
             "mission": data.mission,
             "enemy": data.enemy,
             "dor_cliente": data.pain,
