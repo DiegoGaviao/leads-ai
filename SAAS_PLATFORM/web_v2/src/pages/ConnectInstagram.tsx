@@ -6,7 +6,16 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const API_URL = import.meta.env.VITE_API_URL || "https://leads-ai-v2.onrender.com";
 
-export default function ManualDataEntryPage() {
+const FACEBOOK_APP_ID = import.meta.env.VITE_FACEBOOK_APP_ID
+    || import.meta.env.VITE_META_APP_ID
+    || "880409131510410";
+
+// Permissões mínimas para ler dados e insights via Graph API
+// Ajuste conforme necessário no painel da Meta (App Review/Permissions).
+const FACEBOOK_OAUTH_SCOPES = "pages_show_list,instagram_basic,instagram_manage_insights,pages_read_engagement";
+const FACEBOOK_DIALOG_VERSION = "v18.0";
+
+export default function ConnectInstagramPage() {
     const navigate = useNavigate();
     const { plan, email, instagram, mission, enemy, pain, method, dream, dreamClient,
         toneVoice, brandValues, offerDetails, differentiation, posts: savedPosts, setPosts } = useOnboardingStore();
@@ -73,6 +82,23 @@ export default function ManualDataEntryPage() {
         }
     };
 
+    const startFacebookOAuth = () => {
+        // IMPORTANTE: para não depender do domínio do frontend provisório (Render),
+        // usamos SEMPRE o redirect URI já autorizado no cPanel.
+        // Assim o Meta sempre devolve o `code` para /callback do domínio "www.dhawk.com.br".
+        const redirectUri = "https://www.dhawk.com.br/projetos/leads-ai/callback";
+
+        const state = `leads-ai-${Date.now()}`;
+        const authUrl = `https://www.facebook.com/${FACEBOOK_DIALOG_VERSION}/dialog/oauth` +
+            `?client_id=${encodeURIComponent(FACEBOOK_APP_ID)}` +
+            `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+            `&response_type=code` +
+            `&scope=${encodeURIComponent(FACEBOOK_OAUTH_SCOPES)}` +
+            `&state=${encodeURIComponent(state)}`;
+
+        window.location.href = authUrl;
+    };
+
     if (isFinished) {
         return (
             <div className="min-h-screen bg-slate-950 text-slate-50 flex flex-col items-center justify-center p-6 text-center antialiased">
@@ -99,6 +125,24 @@ export default function ManualDataEntryPage() {
     return (
         <div className="min-h-screen bg-slate-950 text-slate-50 flex flex-col items-center py-20 px-6 antialiased">
             <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-[300px] bg-secondary/5 blur-[120px] -z-10" />
+
+            <div className="w-full max-w-3xl mb-10 text-center">
+                <div className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-slate-900 border border-slate-800 text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-6">
+                    <BarChart2 className="w-3.5 h-3.5 text-primary" /> Conexão com Instagram
+                </div>
+                <button
+                    onClick={startFacebookOAuth}
+                    className="btn-primary w-full py-5 text-lg flex items-center justify-center gap-3 transition-all"
+                >
+                    Conectar Instagram (Facebook)
+                </button>
+                <p className="text-slate-500 text-xs mt-3 leading-relaxed">
+                    Ao autorizar, liberamos acesso para buscar seus posts e métricas direto do Instagram via Facebook.
+                </p>
+                <p className="text-slate-500 text-xs mt-2 leading-relaxed">
+                    Se você não quiser conectar agora, role e preencha as métricas manualmente.
+                </p>
+            </div>
 
             {/* Header */}
             <div className="w-full max-w-3xl mb-16 text-center">
