@@ -117,10 +117,10 @@ async def complete_onboarding(data: OnboardingCompleteRequest, background_tasks:
         brand_data = {
             "email": data.email,
             "instagram_handle": data.instagram,
-            # Persistimos para permitir refresh sem precisar reautorizar o cliente.
-            # Se ela já conectou antes, esse campo pode estar vazio e será necessário reconectar 1x.
-            "facebook_access_token": data.facebook_token,
-            "instagram_business_id": data.instagram_id,
+            # Padrão do projeto no Supabase compartilhado: prefixo `la_`.
+            # Mantemos semântica igual: persistir token/id para permitir refresh sem reconectar toda vez.
+            "la_facebook_access_token": data.facebook_token,
+            "la_instagram_business_id": data.instagram_id,
             "mission": data.mission,
             "enemy": data.enemy,
             "dor_cliente": data.pain,
@@ -205,9 +205,14 @@ async def run_initial_scan(account_id: str, token: str):
         posts = fb_client.get_posts_data(account_id, token, limit=12)
         logging.info(f"📸 {len(posts)} posts baixados. Salvando no banco...")
         
-        # Prepara Payload para leads_ai_posts
-        # Precisamos do brand_id. Vamos buscar pelo instagram_business_id
-        brand_res = supabase.table("leads_ai_brands").select("id").eq("instagram_business_id", account_id).execute()
+        # Prepara payload para leads_ai_posts
+        # Precisamos do brand_id. Primeiro tentamos colunas com prefixo `la_`.
+        brand_res = (
+            supabase.table("leads_ai_brands")
+            .select("id")
+            .eq("la_instagram_business_id", account_id)
+            .execute()
+        )
         
         if not brand_res.data:
             logging.error("❌ Marca não encontrada para salvar posts.")
@@ -271,25 +276,32 @@ async def refresh_posts(req: RefreshPostsRequest):
 
     brand = brand_res.data[0]
     brand_id = brand.get("id")
-    account_id = brand.get("instagram_business_id")
-    token = brand.get("facebook_access_token")
+    # Prioriza padrão novo `la_`, com fallback para legado sem prefixo.
+    account_id = brand.get("la_instagram_business_id") or brand.get("instagram_business_id")
+    token = brand.get("la_facebook_access_token") or brand.get("facebook_access_token")
 
-    if "instagram_business_id" not in brand or "facebook_access_token" not in brand:
+    if (
+        ("la_instagram_business_id" not in brand and "instagram_business_id" not in brand)
+        or ("la_facebook_access_token" not in brand and "facebook_access_token" not in brand)
+    ):
         raise HTTPException(
             status_code=400,
-            detail="Schema desatualizado: faltam colunas instagram_business_id/facebook_access_token em leads_ai_brands. Rode a migration 02_auth_migration.sql.",
+            detail=(
+                "Schema desatualizado: faltam colunas de auth em leads_ai_brands. "
+                "Esperado: la_instagram_business_id/la_facebook_access_token (ou legado sem prefixo)."
+            ),
         )
 
     if not account_id or account_id == "manual_entry":
         raise HTTPException(
             status_code=400,
-            detail="instagram_business_id está vazio. A marca precisa se conectar novamente no onboarding.",
+            detail="instagram_business_id (la_) está vazio. A marca precisa se conectar novamente no onboarding.",
         )
 
     if not token or token == "manual_entry":
         raise HTTPException(
             status_code=400,
-            detail="facebook_access_token está vazio. A marca precisa se conectar novamente no onboarding.",
+            detail="facebook_access_token (la_) está vazio. A marca precisa se conectar novamente no onboarding.",
         )
 
     try:
