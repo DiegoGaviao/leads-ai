@@ -4,6 +4,15 @@ from pydantic import BaseModel
 from typing import List, Optional, Union
 import json
 import logging
+import sys
+
+# Render / Docker: sem isso, logging.info do routers/auth não aparece nos logs (nível padrão WARNING).
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
+    stream=sys.stdout,
+    force=True,
+)
 
 from database import get_supabase_client
 from services import AICouncilService

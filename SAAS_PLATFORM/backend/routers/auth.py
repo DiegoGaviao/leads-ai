@@ -5,6 +5,12 @@ from AGENTS.agent_scout.facebook_client import FacebookClient
 from database import get_supabase_client
 import logging
 from datetime import datetime
+import os
+import json
+import resend
+from services import AICouncilService
+from email_templates import get_professional_strategy_email
+from market_insights import build_full_insights_block
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 fb_client = FacebookClient()
@@ -168,7 +174,36 @@ async def complete_onboarding(data: OnboardingCompleteRequest, background_tasks:
             if k == "tone_voice" and tone_voice_value is None:
                 continue
             clean_brand_data[k] = v
-        brand_res = supabase.table("leads_ai_brands").upsert(clean_brand_data, on_conflict="instagram_handle").execute()
+        try:
+            brand_res = (
+                supabase.table("leads_ai_brands")
+                .upsert(clean_brand_data, on_conflict="instagram_handle")
+                .execute()
+            )
+        except Exception as upsert_err:
+            error_text = str(upsert_err)
+            missing_tone_columns = (
+                "tone_voice" in error_text
+                or "tone_voice_matrix" in error_text
+                or "schema cache" in error_text
+            )
+            if not missing_tone_columns:
+                raise
+
+            # Fallback de compatibilidade para bancos ainda sem as colunas novas de tom de voz.
+            logging.warning(
+                "Schema sem tone_voice/tone_voice_matrix; repetindo upsert sem colunas opcionais. Erro: %s",
+                error_text,
+            )
+            fallback_brand_data = {
+                k: v for k, v in clean_brand_data.items()
+                if k not in ("tone_voice", "tone_voice_matrix")
+            }
+            brand_res = (
+                supabase.table("leads_ai_brands")
+                .upsert(fallback_brand_data, on_conflict="instagram_handle")
+                .execute()
+            )
         
         logging.info(f"Brand Res: {brand_res.data}")
         
@@ -207,17 +242,123 @@ async def complete_onboarding(data: OnboardingCompleteRequest, background_tasks:
             # Isso resolve o problema de preencher 2x e o worker ignorar a segunda vez.
             supabase.table("leads_ai_strategies").delete().eq("brand_id", brand_id).execute()
             logging.info(f"♻️ Estratégias antigas limpas para {data.instagram}. Worker será acionado.")
+            # Dispara geração de estratégia imediatamente no backend para não depender
+            # exclusivamente do worker em produção.
+            background_tasks.add_task(run_strategy_pipeline, brand_id)
+        else:
+            logging.error(
+                "❌ Onboarding: brand_id ficou None após upsert — pipeline de estratégia/e-mail NÃO foi agendado. "
+                "instagram=%s email=%s",
+                data.instagram,
+                data.email,
+            )
 
         # 3. Disparar Scan em Background (Opcional se for manual_entry, mas enviamos para consistência)
         if data.instagram_id != "manual_entry":
             background_tasks.add_task(run_initial_scan, data.instagram_id, data.facebook_token)
         
-        return {"success": True, "message": "Onboarding completo!"}
+        return {
+            "success": True,
+            "message": "Onboarding completo!",
+            "brand_id": brand_id,
+            "pipeline_scheduled": bool(brand_id),
+        }
         
     except Exception as e:
         logging.error(f"❌ Erro Crítico Onboarding: {str(e)}")
         # Se for erro do Supabase, o e pode ter detalhes
         raise HTTPException(status_code=500, detail=f"Erro interno no servidor: {str(e)}")
+
+async def run_strategy_pipeline(brand_id: str):
+    """
+    Gera estratégia e envia e-mail em background logo após onboarding.
+    Reduz dependência de worker para o cliente receber resposta rápida.
+    """
+    logging.info("▶ run_strategy_pipeline INICIADO brand_id=%s", brand_id)
+    supabase = get_supabase_client()
+    resend.api_key = os.getenv("RESEND_API_KEY") or ""
+    from_addr = os.getenv("EMAIL_FROM", "Leads AI <onboarding@resend.dev>")
+
+    try:
+        brand_res = (
+            supabase.table("leads_ai_brands")
+            .select("*")
+            .eq("id", brand_id)
+            .limit(1)
+            .execute()
+        )
+        if not brand_res.data:
+            logging.error("❌ run_strategy_pipeline: brand_id não encontrado: %s", brand_id)
+            return
+
+        brand = brand_res.data[0]
+        email = brand.get("email")
+
+        posts_res = supabase.table("leads_ai_posts").select("*").eq("brand_id", brand_id).execute()
+        posts = posts_res.data or []
+        posts_context = "Sem histórico de posts disponível."
+        if posts:
+            posts_context = "\n".join([
+                f"- {p.get('permalink')} | Views: {p.get('views')} | Likes: {p.get('likes')} | Comments: {p.get('comments')} | Shares: {p.get('shares')} | Saves: {p.get('saves')}"
+                for p in posts
+            ])
+
+        tone_matrix = brand.get("tone_voice_matrix", {}) or {}
+        if isinstance(tone_matrix, str):
+            try:
+                tone_matrix = json.loads(tone_matrix)
+            except Exception:
+                tone_matrix = {}
+
+        briefing_dict = {
+            "mission": brand.get("mission") or brand.get("missao", ""),
+            "tone_voice": brand.get("tone_voice", tone_matrix.get("toneVoice", "Profissional")),
+            "authority": brand.get("authority_proof") or "Especialista",
+            "big_promise": brand.get("big_promise", "Transformação"),
+            "enemy": brand.get("enemy", ""),
+            "pain_point": brand.get("pain_point", brand.get("dor_cliente", "")),
+            "desire_point": brand.get("desire_point", tone_matrix.get("dream", "")),
+            "method_name": brand.get("method_name", ""),
+            "dream_client": brand.get("dream_client") or tone_matrix.get("dreamClient", ""),
+            "brand_values": tone_matrix.get("brandValues", ""),
+            "offer_details": tone_matrix.get("offerDetails", ""),
+            "differentiation": tone_matrix.get("differentiation", ""),
+        }
+
+        insights_block = build_full_insights_block(supabase, posts, brand_id)
+        logging.info("🧠 run_strategy_pipeline: gerando estratégia para %s", email or brand_id)
+        strategy_json = AICouncilService.generate_strategy(briefing_dict, insights_block, posts_context)
+
+        save_payload = {
+            "brand_id": brand_id,
+            "persona_markdown": strategy_json.get("persona", ""),
+            "strategy_markdown": strategy_json.get("estrategia", ""),
+            "scripts_json": strategy_json.get("roteiros", []),
+        }
+        supabase.table("leads_ai_strategies").insert(save_payload).execute()
+
+        if not email:
+            logging.warning("⚠️ run_strategy_pipeline: sem e-mail para brand_id=%s", brand_id)
+            return
+        if not resend.api_key:
+            logging.error("❌ run_strategy_pipeline: RESEND_API_KEY ausente")
+            return
+
+        html_body = get_professional_strategy_email(
+            strategy_json.get("persona", ""),
+            strategy_json.get("estrategia", ""),
+            strategy_json.get("roteiros", []),
+        )
+        send_res = resend.Emails.send({
+            "from": from_addr,
+            "to": email,
+            "subject": "🎉 Sua Estratégia Leads AI está Pronta!",
+            "html": html_body,
+        })
+        logging.info("✅ run_strategy_pipeline: e-mail enviado (%s) resposta_resend=%s", email, send_res)
+    except Exception as e:
+        logging.exception("❌ run_strategy_pipeline falhou para %s", brand_id)
+
 async def run_initial_scan(account_id: str, token: str):
     """
     Função Background: Baixa posts e salva na tabela de posts.

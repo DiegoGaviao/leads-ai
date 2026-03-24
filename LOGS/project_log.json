@@ -4,5 +4,119 @@
         "status": "SETUP",
         "message": "Strategy (MD), Data (CSV) and Python Scripts (Google Sheets sync + AI Analyzer) recovered. Removed duplicated files from DHAWK.",
         "next_task": "Create Web Interface/Frontend using FastAPI+React Boilerplate."
+    },
+    {
+        "date": "2026-03-18",
+        "status": "OAUTH_INTEGRATION_TEST_READY",
+        "message": "OAuth Facebook/Instagram pronto para teste: frontend inicia login e backend troca code->token para buscar dados do Instagram.",
+        "next_task": "Testar end-to-end com uma conta Instagram Business e confirmar que `leads_ai_posts` é preenchido e a estratégia aparece no `StrategyView`."
+    },
+    {
+        "date": "2026-03-19",
+        "status": "LEGACY_DASHBOARD_UI_SEARCHED",
+        "message": "Busquei no repo por uma página local/legada que listava marcas (ex. Karina/ice3/dhawk) e exibia likes/views, mas não encontrei a tela correspondente nos arquivos atuais. Pode estar em snapshot/arquivo não versionado.",
+        "next_task": "Solicitar a URL/palavra-chave exata dessa página antiga (ou screenshot da barra de endereços) para rastrear o arquivo/rota equivalente."
+    },
+    {
+        "date": "2026-03-19",
+        "status": "POSTS_TABLE_VIEW_CREATED",
+        "message": "Criada a página `/posts` no web_v2 para exibir `leads_ai_posts` em tabela (views/likes/comments/shares/saves) por marca, com botão opcional de recarregar posts.",
+        "next_task": "Testar: autorizar/rodar onboarding de uma marca e confirmar que a tabela `/posts` mostra os posts recém-coletados (Karina)."
+    },
+    {
+        "date": "2026-03-19",
+        "status": "LLM_INSTRUCTIONS_RECONSTRUCTED",
+        "message": "Reconstituí as instruções/prompt original do Leads AI: (1) analisador numérico (DeepSeek) e (2) council criativo gerando persona/estratégia/roteiros; também verifiquei o legado Sheets-based em WORKERS/robo_analista.py.",
+        "next_task": "Se necessário, alinhar o wording do plano original (Meta API -> Sheets) com o que o código atual realmente implementa (Supabase via Graph API)."
+    },
+    {
+        "date": "2026-03-19",
+        "status": "FINAL_GAPS_AUTO_FIXED",
+        "message": "Corrigidos gaps técnicos sem dependência do usuário: callback usa `/auth/onboarding/complete`, fallback do backend no callback para Render, rota HEAD `/` para health-check, e tela `/posts` ganhou seleção de marcas para visualizar posts por conta.",
+        "next_task": "Executar deploy do frontend atualizado e validar em produção (`/connect`, `/callback`, `/strategy`, `/posts`)."
+    },
+    {
+        "date": "2026-03-23",
+        "status": "ONBOARDING_SCHEMA_FALLBACK_FIXED",
+        "message": "Corrigido erro de onboarding no endpoint `/auth/onboarding/complete` quando o Supabase retorna schema cache desatualizado para `tone_voice`/`tone_voice_matrix`: agora o backend tenta upsert com esses campos e, se falhar por coluna ausente, repete sem os campos opcionais para não interromper o fluxo.",
+        "next_task": "Fazer deploy do backend e revalidar o fluxo em produção no `dhawk.com.br/projetos/leads-ai` até exibir sucesso sem popup de erro."
+    },
+    {
+        "date": "2026-03-23",
+        "status": "CONNECT_FLOW_MANUAL_GATED_AND_EMAIL_ENV_DECLARED",
+        "message": "UX do `/connect` ajustada para priorizar conexao automatica com Instagram e esconder o preenchimento manual por padrao (modo manual agora e opt-in). Tambem foram declaradas variaveis `RESEND_API_KEY` e `EMAIL_FROM` no `render.yaml` para backend e worker, reduzindo risco de falha no envio de e-mails em producao.",
+        "next_task": "Deploy de frontend+infra no Render e validar: (1) botao de conectar aparece primeiro, (2) modo manual so abre sob demanda, (3) worker envia e-mail apos estrategia."
+    },
+    {
+        "date": "2026-03-23",
+        "status": "ONBOARDING_DIRECT_STRATEGY_BACKGROUND",
+        "message": "Implementado fallback operacional no backend (`/auth/onboarding/complete`) para gerar estratégia e enviar e-mail em background imediatamente após salvar marca, sem depender exclusivamente do worker. Isso cobre cenários em que o worker não processa a fila em produção.",
+        "next_task": "Deploy do backend e validar em produção: onboarding completo deve gerar registro em `leads_ai_strategies` e envio de e-mail mesmo sem intervenção manual no worker."
+    },
+    {
+        "date": "2026-03-23",
+        "status": "OAUTH_FRONTEND_HARDENED",
+        "message": "Fortalecido o OAuth no frontend: removido fallback hardcoded de app id e adicionado bloqueio claro quando `VITE_FACEBOOK_APP_ID` não está configurado; callback agora é montado via `new URL(..., window.location.origin)` para evitar `redirect_uri` malformado (ex.: `https:/.www...`).",
+        "next_task": "Deploy do frontend com `VITE_FACEBOOK_APP_ID` configurado e validação do login Meta até retorno no `/callback`."
+    },
+    {
+        "date": "2026-03-23",
+        "status": "META_ICON_HTML_GENERATOR_CREATED",
+        "message": "Criado utilitário local `SAAS_PLATFORM/web_v2/meta_icon_generator.html` para gerar e baixar ícones PNG 512/1024 do Leads AI diretamente no navegador, sem depender de Figma.",
+        "next_task": "Abrir o HTML no navegador, baixar `leads-ai-app-icon-512.png` e enviar no campo de ícone do app no Meta App Review."
+    },
+    {
+        "date": "2026-03-23",
+        "status": "META_APP_REVIEW_SUBMITTED",
+        "message": "Pedido de App Review enviado no Meta Developers para o app Leads AI System: permissões em análise incluem `pages_show_list`, `pages_read_engagement`, `instagram_basic` e `instagram_manage_insights`. Status no painel: análise em andamento (prazo típico até ~10 dias).",
+        "next_task": "Monitorar e-mail/painel Meta; se solicitarem ajustes ou screencast adicional, responder rápido. Após aprovação, validar OAuth em produção com conta cliente real (sem precisar de tester role)."
+    },
+    {
+        "date": "2026-03-23",
+        "status": "MARKET_INSIGHTS_AGGREGATE_IN_PROMPT",
+        "message": "Implementado `market_insights.py`: resumo numérico dos posts do cliente + sugestões de mercado agregadas e anônimas (quartis e tipos de mídia) a partir de `leads_ai_posts`, excluindo a marca atual no benchmark. Integrado em `run_strategy_pipeline` e `worker.py`. Prompt de `generate_strategy` reforça prioridade do DNA/questionário; amostra bruta de posts do cliente ampliada para 8000 chars.",
+        "next_task": "Deploy backend e testar onboarding: verificar em logs `run_strategy_pipeline` e conteúdo de `leads_ai_strategies` com referências a sugestões de mercado sem perder essência do briefing."
+    },
+    {
+        "date": "2026-03-23",
+        "status": "LANDING_PRICING_COPY_REFRESH",
+        "message": "Atualizado `web_v2/src/components/LandingPage.tsx`: hero e planos alinhados a roteiros completos (slide a slide + legenda), sem Canva no core; upsell criativos sob consulta; mais dados = mais precisão; Meta API condicionada a aprovação; sugestões de mercado agregadas. Preços: Pro R$ 47,90; Master R$ 179,90 pacote único com 10 roteiros + menção a assinatura a partir de R$ 119/mês. FAQ novo. Constantes CHECKOUT_* — atualizar links Mercado Pago para valores novos.",
+        "next_task": "Criar/atualizar checkouts MP (47,90 / 179,90 / assinatura 119) e fazer deploy do frontend."
+    },
+    {
+        "date": "2026-03-23",
+        "status": "LP_PROCESS_SECTION_AND_FB_DISABLED",
+        "message": "Landing: seção `Como funciona` (#como-funciona) com passo a passo (pagamento → questionário → posts → agentes → entrega → ciclo). Nav com link. Connect: botão OAuth Meta desabilitado com aviso de conexão automática em breve para Master; modo manual aberto por padrão.",
+        "next_task": "Deploy de `web_v2` em produção."
+    },
+    {
+        "date": "2026-03-23",
+        "status": "CPANEL_PROJETOS_HUB_HTML_ADDED",
+        "message": "Adicionado `SAAS_PLATFORM/cpanel_uploads/projetos_index.html` — página hub estática para colar na raiz de `/projetos` no cPanel (link para Leads AI e home), caso a index antiga tenha sido apagada.",
+        "next_task": "Subir `projetos_index.html` renomeado para `index.html` na pasta `projetos` do servidor e manter `leads-ai` com build Vite na subpasta."
+    },
+    {
+        "date": "2026-03-23",
+        "status": "LP_CPANEL_DEPLOY_CONFIRMED",
+        "message": "Build Vite (`web_v2`) confirmado em produção no caminho correto: `dhawk.com.br/projetos/leads-ai/` — `index.html` + `assets/` com hashes alinhados (subpasta, base `/projetos/leads-ai/`).",
+        "next_task": "Alinhar links Mercado Pago (CHECKOUT_*) aos valores novos e validar fluxo app completo em produção."
+    },
+    {
+        "date": "2026-03-23",
+        "status": "LP_HERO_RESPONSIVE_ONBOARDING_PERSIST",
+        "message": "LP: hero em 3 blocos legíveis (sem quebra confusa de cor), `text-balance`/`text-pretty`, paddings mobile e `overflow-x-hidden`. Onboarding: campos + etapa persistidos no Zustand (`patchOnboarding`, `onboardingStep`) com aviso ao usuário; botão Voltar. Connect: `setPosts` debounced para localStorage, link voltar ao `/setup`, grid de métricas 1 col no mobile.",
+        "next_task": "Rebuild e deploy do `web_v2` no cPanel; testar fluxo em aba anônima (persistência é por aparelho / localStorage)."
+    },
+    {
+        "date": "2026-03-23",
+        "status": "E2E_VERIFICATION_DOCS_AND_HEALTH",
+        "message": "Criado `SAAS_PLATFORM/VERIFICACAO_E2E_LEADS_AI.md` (checklist por etapa: MP, LP, onboarding, Supabase, e-mail, worker). Endpoint `GET /health/ready` no FastAPI (flags seguras de env). Script `SAAS_PLATFORM/scripts/verify_leads_ai_stack.py`. `render.yaml`: backend declara `DEEPSEEK_API_KEY` (alinhar painel Render).",
+        "next_task": "Deploy do backend no Render para ativar `/health/ready`; rodar script e seguir o .md no teste ponta a ponta."
+    },
+    {
+        "date": "2026-03-24",
+        "status": "BACKEND_LOGGING_ONBOARDING_RESPONSE",
+        "message": "`main.py`: `logging.basicConfig` para INFO ir ao stdout no Render. `auth`: log no início de `run_strategy_pipeline`, `logging.exception` no erro, resposta JSON com `brand_id` e `pipeline_scheduled`; erro explícito se `brand_id` None. Motivação: logs só mostravam Uvicorn — impossível ver falha de e-mail/IA nos painéis.",
+        "next_task": "Deploy backend; repetir onboarding e buscar nos logs `run_strategy_pipeline INICIADO` e `e-mail enviado` ou stack trace."
     }
 ]
