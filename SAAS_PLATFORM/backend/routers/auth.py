@@ -70,6 +70,200 @@ def _is_free_or_starter(plan: Optional[str]) -> bool:
     p = _normalize_plan(plan)
     return p in {"free", "starter"}
 
+
+def _safe_int(value: Optional[str]) -> int:
+    try:
+        if value is None:
+            return 0
+        cleaned = str(value).strip()
+        return int(cleaned) if cleaned.isdigit() else 0
+    except Exception:
+        return 0
+
+
+def _summarize_onboarding(data: OnboardingCompleteRequest) -> dict:
+    required_fields = {
+        "email": data.email,
+        "instagram": data.instagram,
+        "mission": data.mission,
+        "enemy": data.enemy,
+        "pain": data.pain,
+        "dream": data.dream,
+        "dreamClient": data.dreamClient,
+        "method": data.method,
+        "toneVoice": data.toneVoice,
+        "brandValues": data.brandValues,
+        "offerDetails": data.offerDetails,
+        "differentiation": data.differentiation,
+    }
+    missing = []
+    for key, value in required_fields.items():
+        if value is None:
+            missing.append(key)
+            continue
+        if isinstance(value, str) and not value.strip():
+            missing.append(key)
+
+    total_required = len(required_fields)
+    filled = total_required - len(missing)
+    completion_pct = int((filled / total_required) * 100) if total_required else 0
+
+    posts = data.manual_posts or []
+    top_views = max((_safe_int(p.views) for p in posts), default=0)
+    top_likes = max((_safe_int(p.likes) for p in posts), default=0)
+    links = [p.link for p in posts if p.link][:5]
+
+    return {
+        "filled_fields": filled,
+        "total_fields": total_required,
+        "missing_fields": missing,
+        "completion_pct": completion_pct,
+        "posts_count": len(posts),
+        "top_views": top_views,
+        "top_likes": top_likes,
+        "post_links": links,
+    }
+
+
+def append_lead_event(
+    *,
+    brand_id: Optional[str],
+    event_type: str,
+    email: Optional[str],
+    instagram: Optional[str],
+    plan: Optional[str],
+    payload: Optional[dict] = None,
+):
+    """
+    Append-only log de eventos de lead para monitoramento/RMKT.
+    Nunca pode quebrar o fluxo principal.
+    """
+    try:
+        supabase = get_supabase_client()
+        event_payload = payload or {}
+        supabase.table("leads_ai_lead_events").insert(
+            {
+                "brand_id": brand_id,
+                "event_type": event_type,
+                "email": (email or "").strip().lower() or None,
+                "instagram_handle": (instagram or "").strip().lower() or None,
+                "plan": _normalize_plan(plan) or None,
+                "event_payload": event_payload,
+            }
+        ).execute()
+    except Exception:
+        logging.warning(
+            "lead_events append falhou (nao bloqueante). Verifique se a tabela leads_ai_lead_events existe."
+        )
+
+
+def _build_owner_lead_alert_html(
+    *,
+    plan: Optional[str],
+    email: Optional[str],
+    instagram: Optional[str],
+    whatsapp: Optional[str],
+    posts_count: int,
+    top_views: int,
+    top_likes: int,
+    completion_pct: int,
+    filled_fields: int,
+    total_fields: int,
+    missing_fields: List[str],
+    post_links: List[str],
+) -> str:
+    plan_label = (plan or "nao informado").strip().lower() or "nao informado"
+    return f"""
+    <html>
+      <body style="font-family:Inter,Arial,sans-serif;background:#f8fafc;color:#0f172a;">
+        <div style="max-width:640px;margin:0 auto;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px;">
+          <h2 style="margin:0 0 12px 0;">🔔 Novo onboarding no Leads AI</h2>
+          <p style="margin:0 0 16px 0;color:#475569;">
+            Um novo lead concluiu o envio de dados no fluxo.
+          </p>
+          <table style="width:100%;border-collapse:collapse;">
+            <tr><td style="padding:6px 0;color:#64748b;">Plano</td><td style="padding:6px 0;"><strong>{plan_label}</strong></td></tr>
+            <tr><td style="padding:6px 0;color:#64748b;">Instagram</td><td style="padding:6px 0;"><strong>{instagram or '-'}</strong></td></tr>
+            <tr><td style="padding:6px 0;color:#64748b;">E-mail</td><td style="padding:6px 0;"><strong>{email or '-'}</strong></td></tr>
+            <tr><td style="padding:6px 0;color:#64748b;">WhatsApp</td><td style="padding:6px 0;"><strong>{whatsapp or '-'}</strong></td></tr>
+            <tr><td style="padding:6px 0;color:#64748b;">Checklist preenchido</td><td style="padding:6px 0;"><strong>{filled_fields}/{total_fields} ({completion_pct}%)</strong></td></tr>
+            <tr><td style="padding:6px 0;color:#64748b;">Qtd posts enviados</td><td style="padding:6px 0;"><strong>{posts_count}</strong></td></tr>
+            <tr><td style="padding:6px 0;color:#64748b;">Melhor view enviada</td><td style="padding:6px 0;"><strong>{top_views}</strong></td></tr>
+            <tr><td style="padding:6px 0;color:#64748b;">Melhor like enviado</td><td style="padding:6px 0;"><strong>{top_likes}</strong></td></tr>
+          </table>
+          <div style="margin-top:14px;padding:12px;border-radius:8px;background:#f8fafc;border:1px solid #e2e8f0;">
+            <div style="font-size:12px;color:#64748b;margin-bottom:6px;">Campos faltantes</div>
+            <div style="font-size:13px;color:#0f172a;"><strong>{", ".join(missing_fields) if missing_fields else "Nenhum"}</strong></div>
+          </div>
+          <div style="margin-top:14px;padding:12px;border-radius:8px;background:#f8fafc;border:1px solid #e2e8f0;">
+            <div style="font-size:12px;color:#64748b;margin-bottom:6px;">Links de posts enviados</div>
+            <div style="font-size:13px;color:#0f172a;line-height:1.5;">
+              {"<br>".join(_html.escape(link) for link in post_links) if post_links else "Nenhum link informado"}
+            </div>
+          </div>
+        </div>
+      </body>
+    </html>
+    """
+
+
+def send_owner_new_lead_alert(
+    *,
+    plan: Optional[str],
+    email: Optional[str],
+    instagram: Optional[str],
+    whatsapp: Optional[str],
+    manual_posts: Optional[List[PostEntry]],
+    completion_pct: int,
+    filled_fields: int,
+    total_fields: int,
+    missing_fields: List[str],
+):
+    """
+    Alerta operacional para dono do produto quando um novo onboarding chega.
+    Não pode quebrar o fluxo principal: sempre roda em background com fail-safe.
+    """
+    try:
+        owner_email = os.getenv("OWNER_ALERT_EMAIL", "").strip()
+        if not owner_email:
+            logging.info("OWNER_ALERT_EMAIL não configurado; alerta de lead ignorado.")
+            return
+
+        resend.api_key = os.getenv("RESEND_API_KEY") or ""
+        if not resend.api_key:
+            logging.warning("RESEND_API_KEY ausente; alerta de lead ignorado.")
+            return
+
+        from_addr = os.getenv("EMAIL_FROM", "Leads AI <onboarding@resend.dev>")
+        posts = manual_posts or []
+        top_views = max((_safe_int(p.views) for p in posts), default=0)
+        top_likes = max((_safe_int(p.likes) for p in posts), default=0)
+        html_body = _build_owner_lead_alert_html(
+            plan=plan,
+            email=email,
+            instagram=instagram,
+            whatsapp=whatsapp,
+            posts_count=len(posts),
+            top_views=top_views,
+            top_likes=top_likes,
+            completion_pct=completion_pct,
+            filled_fields=filled_fields,
+            total_fields=total_fields,
+            missing_fields=missing_fields,
+            post_links=[p.link for p in posts if p.link][:5],
+        )
+        resp = resend.Emails.send(
+            {
+                "from": from_addr,
+                "to": owner_email,
+                "subject": f"🔔 Novo lead: @{instagram or 'sem_handle'} · {completion_pct}% preenchido · {len(posts)} posts",
+                "html": html_body,
+            }
+        )
+        logging.info("✅ Alerta de novo lead enviado para %s (%s)", owner_email, resp)
+    except Exception:
+        logging.exception("❌ Falha ao enviar alerta de novo lead (não bloqueante)")
+
 class RefreshPostsRequest(BaseModel):
     instagram_handle: str
     limit: Optional[int] = 12
@@ -236,6 +430,30 @@ async def complete_onboarding(data: OnboardingCompleteRequest, background_tasks:
                 brand_id = fallback_res.data[0]['id']
 
         if brand_id:
+            summary = _summarize_onboarding(data)
+            append_lead_event(
+                brand_id=brand_id,
+                event_type="onboarding_received",
+                email=data.email,
+                instagram=data.instagram,
+                plan=data.plan,
+                payload=summary,
+            )
+
+            # Alerta operacional de novo lead (não bloqueante, em background).
+            background_tasks.add_task(
+                send_owner_new_lead_alert,
+                plan=data.plan,
+                email=data.email,
+                instagram=data.instagram,
+                whatsapp=data.whatsapp,
+                manual_posts=data.manual_posts,
+                completion_pct=summary["completion_pct"],
+                filled_fields=summary["filled_fields"],
+                total_fields=summary["total_fields"],
+                missing_fields=summary["missing_fields"],
+            )
+
             # Limite de uso no plano gratuito: 1 geração por conta.
             # Regra não se aplica para contas de teste internas (bypass).
             is_bypass_account = (
@@ -387,6 +605,14 @@ async def run_strategy_pipeline(brand_id: str):
             "scripts_json": strategy_json.get("roteiros", []),
         }
         supabase.table("leads_ai_strategies").insert(save_payload).execute()
+        append_lead_event(
+            brand_id=brand_id,
+            event_type="strategy_generated",
+            email=email,
+            instagram=brand.get("instagram_handle"),
+            plan=brand.get("plan"),
+            payload={"roteiros_count": len(strategy_json.get("roteiros", []) or [])},
+        )
 
         if not email:
             logging.warning("⚠️ run_strategy_pipeline: sem e-mail para brand_id=%s", brand_id)
@@ -406,8 +632,24 @@ async def run_strategy_pipeline(brand_id: str):
             "subject": "🎉 Sua Estratégia Leads AI está Pronta!",
             "html": html_body,
         })
+        append_lead_event(
+            brand_id=brand_id,
+            event_type="strategy_email_sent",
+            email=email,
+            instagram=brand.get("instagram_handle"),
+            plan=brand.get("plan"),
+            payload={"resend_response": send_res},
+        )
         logging.info("✅ run_strategy_pipeline: e-mail enviado (%s) resposta_resend=%s", email, send_res)
     except Exception as e:
+        append_lead_event(
+            brand_id=brand_id,
+            event_type="strategy_pipeline_failed",
+            email=None,
+            instagram=None,
+            plan=None,
+            payload={"error": str(e)},
+        )
         logging.exception("❌ run_strategy_pipeline falhou para %s", brand_id)
 
 async def run_initial_scan(account_id: str, token: str):
