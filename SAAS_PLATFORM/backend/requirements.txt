@@ -10,3 +10,5 @@ huggingface_hub==0.25.2
 python-dotenv==1.0.1
 supabase==2.8.1
 resend==0.8.0
+# email_templates.py: import markdown
+Markdown==3.7
