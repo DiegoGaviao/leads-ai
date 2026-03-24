@@ -7,6 +7,7 @@ import logging
 from datetime import datetime
 import os
 import json
+import html as _html
 import resend
 from services import AICouncilService
 from email_templates import get_professional_strategy_email
