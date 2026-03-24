@@ -118,5 +118,11 @@
         "status": "BACKEND_LOGGING_ONBOARDING_RESPONSE",
         "message": "`main.py`: `logging.basicConfig` para INFO ir ao stdout no Render. `auth`: log no início de `run_strategy_pipeline`, `logging.exception` no erro, resposta JSON com `brand_id` e `pipeline_scheduled`; erro explícito se `brand_id` None. Motivação: logs só mostravam Uvicorn — impossível ver falha de e-mail/IA nos painéis.",
         "next_task": "Deploy backend; repetir onboarding e buscar nos logs `run_strategy_pipeline INICIADO` e `e-mail enviado` ou stack trace."
+    },
+    {
+        "date": "2026-03-24",
+        "status": "EMAIL_TEMPLATE_PRO_UPGRADE",
+        "message": "Refeito `backend/email_templates.py` para padrão mais profissional: hierarquia visual premium, preheader, resumo executivo no topo, blocos de seção com melhor tipografia, cards de roteiros numerados e CTA de próximo passo. Mantido foco em compatibilidade com e-mail clients via estilos inline.",
+        "next_task": "Deploy backend e executar novo onboarding para validar renderização no Gmail (inbox/spam/promotions) e coletar feedback visual."
     }
 ]
