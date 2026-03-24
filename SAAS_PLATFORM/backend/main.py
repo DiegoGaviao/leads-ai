@@ -12,9 +12,9 @@ from services import AICouncilService
 from routers import auth
 
 app = FastAPI(
-    title="Leads AI V2 - Backend (Supabase Integrated)",
+    title="Leads AI - Backend (Supabase Integrated)",
     description="Motor de Inteligência do Conselho de IAs com Banco SQL",
-    version="2.1.0"
+    version="3.0.0"
 )
 
 @app.get("/")
@@ -24,6 +24,42 @@ async def root():
         "version": "2.1.2",
         "api": "Leads AI V2 Backend"
     }
+
+@app.head("/")
+async def root_head():
+    return
+
+
+@app.get("/health/ready")
+@app.get("/ready")  # alias curto (mesma resposta)
+async def health_ready():
+    """
+    Diagnóstico seguro: só indica se variáveis críticas estão definidas (sem expor valores).
+    Use para checar Render antes do teste ponta a ponta.
+    """
+    import os
+
+    has_supabase = bool(os.getenv("SUPABASE_URL") and os.getenv("SUPABASE_KEY"))
+    has_resend = bool(os.getenv("RESEND_API_KEY"))
+    has_email_from = bool(os.getenv("EMAIL_FROM"))
+    has_deepseek = bool(os.getenv("DEEPSEEK_API_KEY"))
+    has_openai = bool(os.getenv("OPENAI_API_KEY"))
+    can_generate = has_deepseek or has_openai
+
+    return {
+        "status": "ok",
+        "checks": {
+            "supabase": has_supabase,
+            "resend": has_resend,
+            "email_from_configured": has_email_from,
+            "deepseek": has_deepseek,
+            "openai": has_openai,
+            "strategy_generation_possible": can_generate,
+        },
+        "email_delivery_possible": has_resend and has_email_from,
+        "ready_for_onboarding_e2e": has_supabase and can_generate and has_resend and has_email_from,
+    }
+
 
 # Includes Router do Auth
 app.include_router(auth.router)
