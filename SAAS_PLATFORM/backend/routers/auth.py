@@ -34,6 +34,7 @@ class PostEntry(BaseModel):
     conversions: Optional[str] = "0"
 
 class OnboardingCompleteRequest(BaseModel):
+    plan: Optional[str] = None
     email: Optional[str] = ""
     instagram: Optional[str] = ""
     whatsapp: Optional[str] = None
@@ -50,6 +51,24 @@ class OnboardingCompleteRequest(BaseModel):
     facebook_token: Optional[str] = "manual_entry" 
     instagram_id: Optional[str] = "manual_entry"
     manual_posts: Optional[List[PostEntry]] = None
+
+
+# Contas internas de teste: bypass da trava de plano gratuito
+FREE_PLAN_LIMIT_BYPASS_EMAILS = {
+    "drmgaviao@gmail.com",
+}
+FREE_PLAN_LIMIT_BYPASS_INSTAGRAMS = {
+    "strike3_br",
+}
+
+
+def _normalize_plan(plan: Optional[str]) -> str:
+    return (plan or "").strip().lower()
+
+
+def _is_free_or_starter(plan: Optional[str]) -> bool:
+    p = _normalize_plan(plan)
+    return p in {"free", "starter"}
 
 class RefreshPostsRequest(BaseModel):
     instagram_handle: str
@@ -217,6 +236,38 @@ async def complete_onboarding(data: OnboardingCompleteRequest, background_tasks:
                 brand_id = fallback_res.data[0]['id']
 
         if brand_id:
+            # Limite de uso no plano gratuito: 1 geração por conta.
+            # Regra não se aplica para contas de teste internas (bypass).
+            is_bypass_account = (
+                (data.email or "").strip().lower() in FREE_PLAN_LIMIT_BYPASS_EMAILS
+                or (data.instagram or "").strip().lower() in FREE_PLAN_LIMIT_BYPASS_INSTAGRAMS
+            )
+            if _is_free_or_starter(data.plan) and not is_bypass_account:
+                existing_strategy = (
+                    supabase.table("leads_ai_strategies")
+                    .select("id")
+                    .eq("brand_id", brand_id)
+                    .limit(1)
+                    .execute()
+                )
+                if existing_strategy.data:
+                    logging.info(
+                        "⛔ Free limit: bloqueado segundo teste para brand_id=%s email=%s instagram=%s",
+                        brand_id,
+                        data.email,
+                        data.instagram,
+                    )
+                    raise HTTPException(
+                        status_code=403,
+                        detail=(
+                            "Seu periodo de teste gratuito acabou. "
+                            "Para continuar evoluindo seus posts com estrategia orientada por dados, "
+                            "monitoramento continuo da pagina e novas recomendacoes do conselho de IAs, "
+                            "ative um plano pago. "
+                            "Com o plano Master voce libera volume maior de roteiros, "
+                            "prioridade de processamento e acompanhamento mais profundo de performance."
+                        ),
+                    )
             
             # 2. Salvar Posts Manuais se houver
             if data.manual_posts:
