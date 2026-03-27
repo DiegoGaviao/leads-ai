@@ -17,8 +17,9 @@ Estruture CADA prompt de imagem em INGLÊS seguindo este método (Sora-style / r
 2) Listas com hífen quando útil (variações de styling, luz, materiais).
 3) Restrições negativas explícitas: no readable text, no logos, no watermarks, no subtitles, avoid symmetrical cliché framing unless intentional, avoid plastic CGI skin / wax faces.
 4) Bloco técnico curto: cinematic lighting, shallow depth of field, ultra-detailed, professional color grading, believable optics (as if shot on full-frame), vertical-friendly composition for Instagram square crop.
-5) Quando fizer sentido com o roteiro, incorpore sutilmente a estética Dhawk: sophisticated dark or neutral base, subtle electric emerald green (#00FF41 family) as accent light or UI glow — luxury tech, minimalist, glass-friendly reflections — SEM dominar a cena se o roteiro for lifestyle orgânico ou clínico acolhedor.
-6) PROIBIDO na cena: qualquer papel, documento, planilha, gráfico, tela de computedor/celular com texto, placas com letras, livros abertos com páginas legíveis, mockups de UI, números ou palavras renderizadas (modelos de imagem inventam lixo). Se precisar de “dados”, sugira luz abstrata, textura, gesto humano ou objeto sem rótulo — NEVER typography in-frame.
+5) Estética Dhawk só quando a cena puder suportar sem roubar o assunto: base neutra ou escura sofisticada, eventual accent emerald (#00FF41 family) como reflexo de luz ou detalhe pequeno — NÃO use isso como desculpa para virar ficção cibernética. Se a direção pedir esporte, mesa bagunçada, locker room, luz fluorescente fria, retratos humanos ou objeto físico simples, mantenha fotorealismo dessa escolha.
+6) PROIBIDO: telas/monitores/celulares com interface legível, placas com letras claras, mockups de app com texto, números ou palavras renderizadas, gráficos de dados como elemento principal com eixos/rótulos legíveis. É PERMITIDO: objetos físicos reais (xícaras, uniformes, tacos, mesa de madeira, papel com marcas de grafite ou blur extremo sem caracteres legíveis, sombras, bagunça orgânica). Troque “papel com anotações” por folha com traços abstratos/iluíveis ou shallow DOF; troque “diagrama legível” por caos de linhas sem tipografia.
+7) PROIBIDO tropear cenário genérico a menos que a direção peça explicitamente: salas de reunião futuristas, war rooms, painéis holográficos, executivos+HUD, grades neon no teto, “cyber boardroom”, paredes inteiras de analytics brilhantes. Se o roteiro fala de negócios mas a direção visual descreve outro lugar, O LUGAR DA DIREÇÃO VENCE.
 """
 
 _DALLE_CHAR_LIMIT = 3900
@@ -59,7 +60,7 @@ class ArtisanAgent:
         {_SORA_STRUCTURE_RULES}
 
         REGRAS ADICIONAIS:
-        - Três variações por roteiro: (A) mais íntima / humana, (B) mais gráfica / conceito, (C) mais "authority" ou produto-contexto — sempre coerente com o texto do roteiro.
+        - Três variações por roteiro: (A) mais íntima / humana, (B) mais gráfica / conceito, (C) mais "authority" ou produto-contexto — desde que TODAS honrem a MESMA localização/props descritos na direção visual do conselho (se existir), sem migrar para sala de comando futurista.
         - Nunca inclua texto legível, marcas ou UI fake com palavras na imagem.
 
         FORMATO DE SAÍDA (obrigatório):
@@ -74,23 +75,41 @@ class ArtisanAgent:
                 f"\nTEMA CRIATIVO PRIORITÁRIO (pedido explícito do cliente — alinhe os 3 conceitos a isto): "
                 f"{creative_theme.strip()}\n"
             )
-        scene_extra = ""
         sd = (scene_direction_pt or "").strip()
         if sd:
             sd = sd[:1200]
-            scene_extra = (
-                f"\nDIREÇÃO VISUAL DO CONSELHO (português — traduza o clima e a composição para os prompts em inglês; "
-                f"esta nota deve guiar enquadramento e metáfora, não um único objeto solto do texto. "
-                f"Se citar papel/recibos/planilhas/telas com texto, mostre a MESMA tensão sem superfície legível: "
-                f"sombras, profundidade de campo, gestos, textura abstrata.):\n{sd}\n"
+        # Roteiro longo puxa "negócios/dados/sala de reunião"; quando há direção visual, limitamos o apoio ao tom.
+        script_for_prompt = (script_text or "").strip()
+        if sd and len(script_for_prompt) > 1600:
+            script_for_prompt = script_for_prompt[:1600] + "…"
+
+        scene_block = ""
+        if sd:
+            scene_block = (
+                "CENA OBRIGATÓRIA (PRIORIDADE MÁXIMA — traduza para inglês nos três prompts; todos devem mostrar este MESMO tipo de lugar, "
+                "objetos e luz. Não substitua por sala corporativa futurista, hologramas, painéis de dados ou cyberpunk):\n"
+                f"{sd}\n"
             )
+
+        if sd:
+            script_block = (
+                "Texto falado / roteiro (use só para tom emocional; NÃO troque a cena obrigatória por causa de palavras como 'dados', 'estratégia' ou 'negócio'):\n"
+                f"{script_for_prompt}\n"
+            )
+        else:
+            script_block = f"Roteiro sugerido:\n{script_for_prompt}\n"
+
         user_msg = (
-            f"Roteiro Sugerido: {script_text}\n"
             f"{theme_extra}"
-            f"{scene_extra}\n"
-            "Gere 3 conceitos visuais magnéticos para este post. "
-            "Nenhum conceito pode incluir documentos, telas com texto, ou números legíveis. "
-            "Integre roteiro + direção visual do conselho numa cena única coerente (sem ignorar a direção por um detalhe aleatório do roteiro)."
+            f"{scene_block if sd else ''}"
+            f"{script_block}"
+            "Gere 3 variações de prompt em inglês. "
+            "Cumprir restrições de tipografia da system prompt; objetos físicos da direção são bem-vindos. "
+            + (
+                "As três variações devem ser leituras diferentes da MESMA direção de cena, não três gêneros diferentes.\n"
+                if sd
+                else "Integre numa cena única coerente com o roteiro.\n"
+            )
         )
         
         def _call(model_name: str):
@@ -140,10 +159,10 @@ class ArtisanAgent:
         prefix = (
             "Generate a single photorealistic editorial photograph from this description only — "
             "do not ask questions. "
-            "Strict ban: NO paper, documents, charts, spreadsheets, phone or laptop screens, "
-            "no posters or signage with letters, no books with readable pages, "
-            "no fake UI, no numbers or words visible anywhere in the frame. "
-            "If the scene would normally need 'data', show abstract light, texture, hands without props, or blurred background only. "
+            "Strict ban: no readable text, logos, watermarks; no phone/laptop/tablet screens showing UI; "
+            "no signage with legible letters; no data-wall charts with legible axes. "
+            "Physical clutter (cups, fabric, sports gear, furniture) is allowed. "
+            "Do not substitute the scene with a futuristic holographic boardroom unless the description demands it. "
             "No logos or watermarks.\n\n"
         )
         suffix = (

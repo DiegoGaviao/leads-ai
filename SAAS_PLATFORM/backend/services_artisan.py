@@ -23,7 +23,8 @@ def _fallback_dalle_prompt(
     parts = [
         "Premium editorial photograph for Instagram square crop, cinematic lighting, shallow depth of field.",
         f"Brand tone: {brand_tone}. Audience: {audience_dna}.",
-        "No documents, no screens, no charts, no printed or digital text visible in frame.",
+        "No readable text, logos, or legible UI on screens; physical props and real locations from the scene direction are OK.",
+        "Avoid futuristic holographic boardroom trope unless the scene explicitly requires it.",
     ]
     if creative_theme and str(creative_theme).strip():
         parts.append(f"Client-requested creative theme (priority): {creative_theme.strip()}")
@@ -33,7 +34,7 @@ def _fallback_dalle_prompt(
         parts.append(f"Hook topic: {tema}")
     if body and not visual:
         parts.append(f"Narrative mood only (abstract, no typography in frame): {body[:400]}")
-    parts.append("Photorealistic, tasteful, no text, no logos, no watermarks, no paper props.")
+    parts.append("Photorealistic, tasteful, no readable typography in frame, no logos or watermarks.")
     return " ".join(parts)[:3500]
 
 
