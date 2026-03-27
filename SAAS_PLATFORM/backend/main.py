@@ -15,7 +15,7 @@ logging.basicConfig(
 )
 
 from database import get_supabase_client
-from services import AICouncilService
+from services import AICouncilService, align_post_themes
 from services_artisan import apply_strategy_creatives
 
 # Includes
@@ -109,6 +109,8 @@ class OnboardingRequest(BaseModel):
     dor_cliente: str
     metodo_nome: str
     posts: List[PostData]
+    expected_roteiros: Optional[int] = None
+    post_themes: Optional[List[str]] = None
 
 @app.post("/analyze")
 async def analyze_strategy(req: OnboardingRequest, authorization: Optional[str] = Header(None)):
@@ -137,6 +139,17 @@ async def analyze_strategy(req: OnboardingRequest, authorization: Optional[str] 
         # 3. Geração de Estratégia (Agente 05 - Conselho)
         logging.info("🧠 Chamando Agente 05 (Conselho Criativo)...")
         ig = (req.instagram or "").strip().lstrip("@")
+        try:
+            n_req = int(req.expected_roteiros) if req.expected_roteiros is not None else None
+        except (TypeError, ValueError):
+            n_req = None
+        if n_req is None:
+            n = len(req.posts) if req.posts else 5
+        else:
+            n = n_req
+        n = max(1, min(n, 15))
+        post_themes_aligned = align_post_themes(req.post_themes, n)
+
         briefing = {
             "mission": req.missao,
             "tone_voice": "Profissional",
@@ -147,6 +160,8 @@ async def analyze_strategy(req: OnboardingRequest, authorization: Optional[str] 
             "desire_point": "",
             "method_name": req.metodo_nome,
             "dream_client": f"Seguidores e leads do @{ig}" if ig else "Público no Instagram",
+            "expected_roteiros": n,
+            "post_themes": post_themes_aligned,
         }
 
         strategy_result = AICouncilService.generate_strategy(briefing, insights, csv_data)

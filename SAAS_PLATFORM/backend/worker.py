@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 
 # Database & Services
 from database import get_supabase_client
-from services import AICouncilService
+from services import AICouncilService, align_post_themes, expected_roteiros_for_plan
 from services_artisan import apply_strategy_creatives
 from market_insights import (
     build_full_insights_block,
@@ -123,6 +123,10 @@ def process_generic(data, is_old=False):
             try: tone_matrix = json.loads(tone_matrix)
             except: tone_matrix = {}
 
+        plan_hint = tone_matrix.get("plan") or data.get("plan")
+        n_roteiros = expected_roteiros_for_plan(str(plan_hint) if plan_hint else None)
+        post_themes_aligned = align_post_themes(tone_matrix.get("postThemes"), n_roteiros)
+
         briefing_dict = {
             'mission': data.get('mission') or data.get('missao', ''),
             'tone_voice': data.get('tone_voice', tone_matrix.get('toneVoice', 'Profissional')),
@@ -135,7 +139,9 @@ def process_generic(data, is_old=False):
             'dream_client': data.get('dream_client') or tone_matrix.get('dreamClient', ''),
             'brand_values': tone_matrix.get('brandValues', ''),
             'offer_details': tone_matrix.get('offerDetails', ''),
-            'differentiation': tone_matrix.get('differentiation', '')
+            'differentiation': tone_matrix.get('differentiation', ''),
+            'expected_roteiros': n_roteiros,
+            'post_themes': post_themes_aligned,
         }
 
         # 3. IA (insights = resumo do cliente + sugestões de mercado anônimas)

@@ -29,17 +29,46 @@ export interface OnboardingState {
         shares: string;
         saves: string;
         conversions: string;
+        /** Tema visual opcional deste roteiro/criativo (alinhado ao índice do post). */
+        creativeTheme?: string;
     }>;
 
     // Step 4: Auth (Opcional por enquanto)
     accessToken: string | null;
     accountId: string | null;
 
+    /** Etapa atual do wizard /setup (1–3). Persistido para não perder ao sair ou recarregar. */
+    onboardingStep: 1 | 2 | 3;
+
     // Actions
     setBasicInfo: (data: Partial<OnboardingState>) => void;
     setStrategy: (data: Partial<OnboardingState>) => void;
     setPosts: (posts: OnboardingState['posts']) => void;
     setAuth: (token: string, accountId: string) => void;
+    setOnboardingStep: (step: 1 | 2 | 3) => void;
+    /** Atualiza campos do formulário de onboarding de uma vez (tudo vai para localStorage via persist). */
+    patchOnboarding: (
+        data: Partial<
+            Pick<
+                OnboardingState,
+                | 'plan'
+                | 'email'
+                | 'instagram'
+                | 'whatsapp'
+                | 'mission'
+                | 'enemy'
+                | 'pain'
+                | 'dream'
+                | 'dreamClient'
+                | 'method'
+                | 'toneVoice'
+                | 'brandValues'
+                | 'offerDetails'
+                | 'differentiation'
+                | 'onboardingStep'
+            >
+        >
+    ) => void;
     reset: () => void;
 }
 
@@ -63,18 +92,22 @@ export const useOnboardingStore = create<OnboardingState>()(
             posts: [],
             accessToken: null,
             accountId: null,
+            onboardingStep: 1,
 
             setBasicInfo: (data) => set((state) => ({ ...state, ...data })),
             setStrategy: (data) => set((state) => ({ ...state, ...data })),
             setPosts: (posts) => set({ posts }),
             setAuth: (token, accountId) => set({ accessToken: token, accountId }),
+            setOnboardingStep: (onboardingStep) => set({ onboardingStep }),
+            patchOnboarding: (data) => set((state) => ({ ...state, ...data })),
             reset: () => set({
                 plan: null,
                 email: '', instagram: '', whatsapp: '',
                 mission: '', enemy: '', pain: '', dream: '', dreamClient: '', method: '',
                 toneVoice: '', brandValues: '', offerDetails: '', differentiation: '',
                 posts: [],
-                accessToken: null, accountId: null
+                accessToken: null, accountId: null,
+                onboardingStep: 1,
             }),
         }),
         {

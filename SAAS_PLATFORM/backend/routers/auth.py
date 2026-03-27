@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 from typing import Optional, List
 from AGENTS.agent_scout.facebook_client import FacebookClient
 from database import get_supabase_client
@@ -9,7 +9,7 @@ import os
 import json
 import html as _html
 import resend
-from services import AICouncilService
+from services import AICouncilService, align_post_themes, expected_roteiros_for_plan
 from services_artisan import apply_strategy_creatives
 from email_templates import get_professional_strategy_email
 from market_insights import build_full_insights_block
@@ -27,6 +27,8 @@ class MasterNotifyRequest(BaseModel):
     fbEmail: str
 
 class PostEntry(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
     link: str
     views: str
     likes: str
@@ -34,6 +36,7 @@ class PostEntry(BaseModel):
     shares: Optional[str] = "0"
     saves: Optional[str] = "0"
     conversions: Optional[str] = "0"
+    creative_theme: Optional[str] = Field(default=None, validation_alias="creativeTheme")
 
 class OnboardingCompleteRequest(BaseModel):
     plan: Optional[str] = None
@@ -349,7 +352,7 @@ async def complete_onboarding(data: OnboardingCompleteRequest, background_tasks:
         if data.toneVoice and isinstance(data.toneVoice, str) and data.toneVoice.strip():
             tone_voice_value = data.toneVoice.strip()
 
-        tone_voice_matrix_value = None
+        tone_voice_matrix_value = {}
         if tone_voice_value:
             tone_voice_matrix_value = {
                 "dream": data.dream,
@@ -359,6 +362,19 @@ async def complete_onboarding(data: OnboardingCompleteRequest, background_tasks:
                 "offerDetails": data.offerDetails,
                 "differentiation": data.differentiation,
             }
+        plan_key = _normalize_plan(data.plan) or ""
+        if plan_key:
+            if not tone_voice_matrix_value:
+                tone_voice_matrix_value = {}
+            tone_voice_matrix_value["plan"] = plan_key
+        if data.manual_posts:
+            if not tone_voice_matrix_value:
+                tone_voice_matrix_value = {}
+            tone_voice_matrix_value["postThemes"] = [
+                (p.creative_theme or "").strip() for p in data.manual_posts
+            ]
+        if not tone_voice_matrix_value:
+            tone_voice_matrix_value = None
 
         # 1. Preparar dados para leads_ai_brands
         brand_data = {
@@ -581,6 +597,10 @@ async def run_strategy_pipeline(brand_id: str):
             except Exception:
                 tone_matrix = {}
 
+        plan_hint = tone_matrix.get("plan") or brand.get("plan")
+        n_roteiros = expected_roteiros_for_plan(str(plan_hint) if plan_hint else None)
+        post_themes_aligned = align_post_themes(tone_matrix.get("postThemes"), n_roteiros)
+
         briefing_dict = {
             "mission": brand.get("mission") or brand.get("missao", ""),
             "tone_voice": brand.get("tone_voice", tone_matrix.get("toneVoice", "Profissional")),
@@ -594,6 +614,8 @@ async def run_strategy_pipeline(brand_id: str):
             "brand_values": tone_matrix.get("brandValues", ""),
             "offer_details": tone_matrix.get("offerDetails", ""),
             "differentiation": tone_matrix.get("differentiation", ""),
+            "expected_roteiros": n_roteiros,
+            "post_themes": post_themes_aligned,
         }
 
         insights_block = build_full_insights_block(supabase, posts, brand_id)

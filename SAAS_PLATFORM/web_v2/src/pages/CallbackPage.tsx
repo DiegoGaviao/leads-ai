@@ -6,11 +6,27 @@ import { Loader2 } from 'lucide-react';
 export default function CallbackPage() {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-    const { setAuth, email, instagram, mission, enemy, pain, method } = useOnboardingStore();
+    const {
+        setAuth,
+        plan,
+        email,
+        instagram,
+        whatsapp,
+        mission,
+        enemy,
+        pain,
+        dream,
+        dreamClient,
+        method,
+        toneVoice,
+        brandValues,
+        offerDetails,
+        differentiation,
+        posts,
+    } = useOnboardingStore();
     const [status, setStatus] = useState("Processando autorização...");
 
-    // URL DO BACKEND OFICIAL (Lê do .env ou usa localhost como fallback)
-    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+    const API_URL = import.meta.env.VITE_API_URL || "https://leads-ai-v2.onrender.com";
 
     useEffect(() => {
         const code = searchParams.get('code');
@@ -24,20 +40,14 @@ export default function CallbackPage() {
 
     const handleAuthExchange = async (code: string) => {
         try {
-            setStatus("Validando Token...");
+            const redirectUri = `${window.location.origin}${window.location.pathname}`;
 
-            // 1. Troca CODE por TOKEN no Backend
+            setStatus("Validando token...");
+
             const resExchange = await fetch(`${API_URL}/auth/facebook/exchange`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ access_token: code }) // A rota do backend espera "access_token" mas usamos code aqui
-                // Backend precisa ser ajustado para trocar Code por Token, ou Frontend faz isso.
-                // Pelo código atual do backend, ele espera um token já?
-                // NÃO. O backend atual auth.py foi feito meio placeholder.
-                // Para simplificar: Vamos mandar o CODE como se fosse o token e o backend que se vire (vou ajustar o backend depois)
-                // Ou melhor: O Frontend deveria pegar o token. Mas isso expõe o App Secret.
-                // CORRETO: Frontend manda CODE -> Backend usa APP ID + SECRET -> Pega TOKEN.
-                // Vou mandar o code mesmo.
+                body: JSON.stringify({ access_token: code, redirect_uri: redirectUri })
             });
 
             const dataExchange = await resExchange.json();
@@ -46,35 +56,44 @@ export default function CallbackPage() {
 
             const token = dataExchange.token;
             const accounts = dataExchange.accounts;
-            const accountId = accounts[0]?.ig_id; // Pega a primeira conta por padrão (MVP)
+            const accountId = accounts[0]?.ig_id;
 
             if (!accountId) throw new Error("Nenhuma conta do Instagram encontrada.");
 
-            setStatus("Salvando seu Perfil...");
+            setStatus("Salvando seu perfil...");
 
-            // 2. Salva o Onboarding Completo (Marca + Auth) no Backend
-            const resOnboarding = await fetch(`${API_URL}/onboarding/complete`, {
+            const resOnboarding = await fetch(`${API_URL}/auth/onboarding/complete`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    email, instagram, mission, enemy, pain, method, // Dados do Step 1/2
+                    plan,
+                    email,
+                    instagram,
+                    whatsapp,
+                    mission,
+                    enemy,
+                    pain,
+                    dream,
+                    dreamClient,
+                    method,
+                    toneVoice,
+                    brandValues,
+                    offerDetails,
+                    differentiation,
+                    manual_posts: posts.length ? posts : undefined,
                     facebook_token: token,
-                    instagram_id: accountId
-                })
+                    instagram_id: accountId,
+                }),
             });
 
             if (!resOnboarding.ok) throw new Error("Falha ao salvar perfil.");
 
-            setStatus("Coletando Posts Automáticos...");
-
-            // 3. Dispara o Scan Inicial (Agente 01)
-            // O backend /onboarding/complete já deveria fazer isso async, mas podemos chamar explícito
-            await fetch(`${API_URL}/agents/scout/scan?account_id=${accountId}&token=${token}`);
+            setStatus("Coletando posts automáticos...");
 
             setAuth(token, accountId);
 
             setStatus("Sucesso! Redirecionando...");
-            setTimeout(() => navigate('/dashboard'), 1500);
+            setTimeout(() => navigate('/strategy'), 1500);
 
         } catch (error: any) {
             console.error(error);
@@ -83,10 +102,10 @@ export default function CallbackPage() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-white font-['Inter']">
-            <Loader2 className="w-16 h-16 text-blue-500 animate-spin mb-6" />
-            <h2 className="text-2xl font-bold animate-pulse">{status}</h2>
-            <p className="text-slate-500 mt-4 text-sm">Por favor, não feche esta janela.</p>
+        <div className="flex min-h-screen flex-col items-center justify-center bg-[#F8FAFC] px-6 font-sans text-slate-900 antialiased">
+            <Loader2 className="mb-6 h-14 w-14 animate-spin text-emerald-600" />
+            <h2 className="animate-pulse text-center text-xl font-bold text-slate-900 md:text-2xl">{status}</h2>
+            <p className="mt-4 text-center text-sm text-slate-500">Por favor, não feche esta janela.</p>
         </div>
     );
 }
