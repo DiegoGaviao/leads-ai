@@ -18,6 +18,7 @@ Estruture CADA prompt de imagem em INGLÊS seguindo este método (Sora-style / r
 3) Restrições negativas explícitas: no readable text, no logos, no watermarks, no subtitles, avoid symmetrical cliché framing unless intentional, avoid plastic CGI skin / wax faces.
 4) Bloco técnico curto: cinematic lighting, shallow depth of field, ultra-detailed, professional color grading, believable optics (as if shot on full-frame), vertical-friendly composition for Instagram square crop.
 5) Quando fizer sentido com o roteiro, incorpore sutilmente a estética Dhawk: sophisticated dark or neutral base, subtle electric emerald green (#00FF41 family) as accent light or UI glow — luxury tech, minimalist, glass-friendly reflections — SEM dominar a cena se o roteiro for lifestyle orgânico ou clínico acolhedor.
+6) PROIBIDO na cena: qualquer papel, documento, planilha, gráfico, tela de computedor/celular com texto, placas com letras, livros abertos com páginas legíveis, mockups de UI, números ou palavras renderizadas (modelos de imagem inventam lixo). Se precisar de “dados”, sugira luz abstrata, textura, gesto humano ou objeto sem rótulo — NEVER typography in-frame.
 """
 
 _DALLE_CHAR_LIMIT = 3900
@@ -33,7 +34,13 @@ class ArtisanAgent:
         self.provider = provider
         self.openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
     
-    def generate_visual_prompts(self, script_text: str, brand_tone: str, audience_dna: str) -> List[str]:
+    def generate_visual_prompts(
+        self,
+        script_text: str,
+        brand_tone: str,
+        audience_dna: str,
+        creative_theme: str | None = None,
+    ) -> List[str]:
         """
         Recebe um roteiro e gera 3 opções de prompts visuais otimizados para IAs de imagem.
         Foca em: Composição, Iluminação, Estilo de Marca e Psicologia das Cores.
@@ -60,7 +67,18 @@ class ArtisanAgent:
         Cada string deve ser um único parágrafo denso em inglês seguindo a estrutura acima (sem perguntas ao modelo, só descrição).
         """
         
-        user_msg = f"Roteiro Sugerido: {script_text}\n\nGere 3 conceitos visuais magnéticos para este post."
+        theme_extra = ""
+        if creative_theme and str(creative_theme).strip():
+            theme_extra = (
+                f"\nTEMA CRIATIVO PRIORITÁRIO (pedido explícito do cliente — alinhe os 3 conceitos a isto): "
+                f"{creative_theme.strip()}\n"
+            )
+        user_msg = (
+            f"Roteiro Sugerido: {script_text}\n"
+            f"{theme_extra}\n"
+            "Gere 3 conceitos visuais magnéticos para este post. "
+            "Nenhum conceito pode incluir documentos, telas com texto, ou números legíveis."
+        )
         
         def _call(model_name: str):
             return self.openai_client.chat.completions.create(
@@ -107,8 +125,13 @@ class ArtisanAgent:
         if not inner:
             return ""
         prefix = (
-            "Generate a single photorealistic editorial image from this description only — "
-            "do not ask questions. No readable text, logos, watermarks, or UI mockups with words.\n\n"
+            "Generate a single photorealistic editorial photograph from this description only — "
+            "do not ask questions. "
+            "Strict ban: NO paper, documents, charts, spreadsheets, phone or laptop screens, "
+            "no posters or signage with letters, no books with readable pages, "
+            "no fake UI, no numbers or words visible anywhere in the frame. "
+            "If the scene would normally need 'data', show abstract light, texture, hands without props, or blurred background only. "
+            "No logos or watermarks.\n\n"
         )
         suffix = (
             "\n\nTechnical: cinematic lighting, shallow depth of field, ultra-detailed, "
