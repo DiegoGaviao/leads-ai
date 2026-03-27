@@ -37,12 +37,25 @@ def _render_roteiros(roteiros) -> str:
         legenda = _html.escape((r_item or {}).get("legenda", "")).strip()
         texto_html = _render_md((r_item or {}).get("texto", ""))
 
+        image_url = ((r_item or {}).get("image_url") or "").strip()
+        image_block = ""
+        if image_url:
+            safe_img = _html.escape(image_url, quote=True)
+            image_block = f"""
+            <tr>
+              <td style="padding-top:12px;">
+                <div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#64748b;text-transform:uppercase;margin-bottom:8px;">Criativo gerado (imagem)</div>
+                <img src="{safe_img}" alt="Criativo sugerido Leads AI" width="560" style="display:block;max-width:100%;height:auto;border-radius:12px;border:1px solid #e2e8f0;background:#f8fafc;" />
+              </td>
+            </tr>
+            """
+
         visual_block = ""
         if visual:
             visual_block = f"""
             <tr>
               <td style="padding-top:12px;">
-                <div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#64748b;text-transform:uppercase;margin-bottom:6px;">Visual sugerido</div>
+                <div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#64748b;text-transform:uppercase;margin-bottom:6px;">Direção visual (texto)</div>
                 <div style="font-size:14px;line-height:1.6;color:#475569;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px 12px;">{visual}</div>
               </td>
             </tr>
@@ -74,6 +87,7 @@ def _render_roteiros(roteiros) -> str:
                   <div style="font-size:15px;line-height:1.7;color:#1f2937;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px;">
                     {texto_html}
                   </div>
+                  {image_block}
                   {visual_block}
                   {legenda_block}
                 </td>
@@ -119,7 +133,7 @@ def get_professional_strategy_email(persona, estrategia, roteiros):
                     <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#93c5fd;font-weight:700;">Leads AI | Dhawk Labs</div>
                     <h1 style="margin:10px 0 0 0;color:#ffffff;font-size:27px;line-height:1.22;">Relatorio Estrategico Profissional</h1>
                     <p style="margin:10px 0 0 0;color:#cbd5e1;font-size:14px;line-height:1.55;">
-                      Diagnostico de DNA + direcionamento do conselho + roteiros prontos para gravacao.
+                      Diagnostico de DNA + direcionamento + roteiros e criativos de imagem gerados por IA.
                     </p>
                   </td>
                 </tr>

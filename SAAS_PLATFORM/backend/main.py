@@ -16,6 +16,7 @@ logging.basicConfig(
 
 from database import get_supabase_client
 from services import AICouncilService
+from services_artisan import apply_strategy_creatives
 
 # Includes
 from routers import auth
@@ -54,6 +55,10 @@ async def health_ready():
     has_deepseek = bool(os.getenv("DEEPSEEK_API_KEY"))
     has_openai = bool(os.getenv("OPENAI_API_KEY"))
     can_generate = has_deepseek or has_openai
+    creatives_on = (os.getenv("LEADS_AI_GENERATE_CREATIVES") or "true").strip().lower() in (
+        "1", "true", "yes", "on",
+    )
+    creatives_possible = bool(has_openai and creatives_on)
 
     return {
         "status": "ok",
@@ -64,6 +69,8 @@ async def health_ready():
             "deepseek": has_deepseek,
             "openai": has_openai,
             "strategy_generation_possible": can_generate,
+            "image_creatives_possible": creatives_possible,
+            "creatives_bucket": (os.getenv("LEADS_AI_CREATIVES_BUCKET") or "leads-ai-creatives").strip(),
         },
         "email_delivery_possible": has_resend and has_email_from,
         "ready_for_onboarding_e2e": has_supabase and can_generate and has_resend and has_email_from,
@@ -129,16 +136,24 @@ async def analyze_strategy(req: OnboardingRequest, authorization: Optional[str] 
         
         # 3. Geração de Estratégia (Agente 05 - Conselho)
         logging.info("🧠 Chamando Agente 05 (Conselho Criativo)...")
+        ig = (req.instagram or "").strip().lstrip("@")
         briefing = {
-            "missao": req.missao,
-            "inimigo": req.inimigo,
-            "dor_cliente": req.dor_cliente,
-            "metodo_nome": req.metodo_nome,
-            "instagram": req.instagram
+            "mission": req.missao,
+            "tone_voice": "Profissional",
+            "authority": "Criador de conteúdo",
+            "big_promise": "Resultados com conteúdo estratégico",
+            "enemy": req.inimigo,
+            "pain_point": req.dor_cliente,
+            "desire_point": "",
+            "method_name": req.metodo_nome,
+            "dream_client": f"Seguidores e leads do @{ig}" if ig else "Público no Instagram",
         }
-        
+
         strategy_result = AICouncilService.generate_strategy(briefing, insights, csv_data)
-               
+        strategy_result = apply_strategy_creatives(
+            strategy_result, briefing, storage_slug=ig or req.email or "manual"
+        )
+
         return {
             "success": True,
             "data": strategy_result

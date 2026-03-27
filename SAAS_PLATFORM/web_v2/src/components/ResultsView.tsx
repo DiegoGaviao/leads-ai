@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { motion } from 'framer-motion'
 import { User, Target, FileText, Download, Share2, ChevronRight, Copy, Sparkles } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
+import { useNavigate } from 'react-router-dom'
 
 interface ResultsViewProps {
     data: {
@@ -12,12 +13,15 @@ interface ResultsViewProps {
             tema: string
             visual: string
             texto: string
+            image_url?: string
+            visual_prompts?: string[]
         }>
     }
 }
 
 export function ResultsView({ data }: ResultsViewProps) {
     const [activeTab, setActiveTab] = useState('persona')
+    const navigate = useNavigate()
 
     const copyToClipboard = (text: string) => {
         navigator.clipboard.writeText(text);
@@ -25,66 +29,70 @@ export function ResultsView({ data }: ResultsViewProps) {
     };
 
     return (
-        <div className="max-w-6xl mx-auto px-6 py-20 antialiased">
-            {/* Background Blobs for specific page */}
-            <div className="fixed top-20 right-0 w-[500px] h-[500px] bg-primary/5 blur-[120px] -z-10 rounded-full" />
+        <div className="mx-auto max-w-6xl px-5 py-12 antialiased md:px-8 md:py-16">
+            <div className="fixed top-24 right-0 -z-10 h-[400px] w-[400px] rounded-full bg-emerald-500/[0.04] blur-[100px]" />
 
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
+            <div className="mb-12 flex flex-col justify-between gap-8 md:mb-16 md:flex-row md:items-end">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="space-y-4"
                 >
                     <div className="flex items-center gap-2">
-                        <Sparkles className="w-5 h-5 text-primary" />
-                        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-[0.2em]">Entrega Finalizada</span>
+                        <Sparkles className="h-5 w-5 text-emerald-600" />
+                        <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Entrega finalizada</span>
                     </div>
-                    <h2 className="text-4xl md:text-5xl font-bold font-display tracking-tight text-slate-50">Sua Nova Estratégia</h2>
-                    <p className="text-slate-400 text-lg max-w-xl">
-                        Abaixo está o DNA da sua marca e os roteiros mestres gerados pela nossa IA.
+                    <h2 className="font-display text-3xl font-bold tracking-tight text-slate-900 md:text-4xl lg:text-5xl">Sua nova estratégia</h2>
+                    <p className="max-w-xl text-lg text-slate-600">
+                        DNA da marca, roteiros e criativos visuais gerados para você publicar mais rápido.
                     </p>
                 </motion.div>
-                <div className="flex gap-4">
-                    <button className="btn-secondary py-3 px-6 text-xs font-bold uppercase tracking-widest flex items-center gap-2">
-                        <Download className="w-4 h-4" /> Exportar PDF
+                <div className="flex flex-wrap gap-3">
+                    <button type="button" className="btn-secondary flex items-center gap-2 py-3 px-5 text-xs font-bold uppercase tracking-widest">
+                        <Download className="h-4 w-4" /> Exportar PDF
                     </button>
-                    <button className="btn-primary py-3 px-6 text-xs font-bold uppercase tracking-widest flex items-center gap-2">
-                        <Share2 className="w-4 h-4" /> Compartilhar
+                    <button
+                        type="button"
+                        onClick={() => navigate('/posts')}
+                        className="btn-secondary flex items-center gap-2 py-3 px-5 text-xs font-bold uppercase tracking-widest"
+                    >
+                        <FileText className="h-4 w-4" /> Ver tabela de posts
+                    </button>
+                    <button type="button" className="btn-primary flex items-center gap-2 py-3 px-5 text-xs font-bold uppercase tracking-widest">
+                        <Share2 className="h-4 w-4" /> Compartilhar
                     </button>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-12 items-start">
-                {/* Sidebar Nav */}
-                <aside className="lg:col-span-1 space-y-3 sticky top-12">
+            <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-4 lg:gap-12">
+                <aside className="sticky top-0 space-y-2 lg:col-span-1 lg:top-12">
                     <TabButton
                         active={activeTab === 'persona'}
                         onClick={() => setActiveTab('persona')}
-                        icon={<User className="w-4 h-4" />}
-                        label="Avatar & Identidade"
+                        icon={<User className="h-4 w-4" />}
+                        label="Avatar & identidade"
                     />
                     <TabButton
                         active={activeTab === 'estrategia'}
                         onClick={() => setActiveTab('estrategia')}
-                        icon={<Target className="w-4 h-4" />}
-                        label="Estratégia de Conteúdo"
+                        icon={<Target className="h-4 w-4" />}
+                        label="Estratégia de conteúdo"
                     />
                     <TabButton
                         active={activeTab === 'roteiros'}
                         onClick={() => setActiveTab('roteiros')}
-                        icon={<FileText className="w-4 h-4" />}
-                        label={`${data.roteiros.length} Roteiros Mestres`}
+                        icon={<FileText className="h-4 w-4" />}
+                        label={`${data.roteiros.length} roteiros mestres`}
                     />
                 </aside>
 
-                {/* Content Area */}
                 <main className="lg:col-span-3">
                     <motion.div
                         key={activeTab}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.4 }}
-                        className="card-premium p-8 md:p-14 min-h-[700px] prose prose-slate prose-invert prose-headings:font-display prose-headings:font-bold prose-p:text-slate-400 prose-p:leading-relaxed prose-strong:text-slate-200 prose-blockquote:border-primary/40 prose-blockquote:bg-slate-900/50 prose-blockquote:py-1 prose-blockquote:px-6 rounded-[2.5rem] max-w-none"
+                        className="card-premium min-h-[560px] max-w-none rounded-[2rem] p-6 md:p-12 lg:min-h-[700px] prose prose-slate max-w-none prose-headings:font-display prose-headings:font-bold prose-headings:text-slate-900 prose-p:text-slate-600 prose-p:leading-relaxed prose-strong:text-slate-800 prose-blockquote:border-emerald-500/40 prose-blockquote:bg-slate-50 prose-blockquote:py-1 prose-blockquote:px-6"
                     >
                         {activeTab === 'persona' && <ReactMarkdown>{data.persona}</ReactMarkdown>}
                         {activeTab === 'estrategia' && <ReactMarkdown>{data.estrategia}</ReactMarkdown>}
@@ -96,63 +104,81 @@ export function ResultsView({ data }: ResultsViewProps) {
     )
 }
 
-function TabButton({ active, onClick, icon, label }: any) {
+function TabButton({ active, onClick, icon, label }: { active: boolean; onClick: () => void; icon: ReactNode; label: string }) {
     return (
         <button
+            type="button"
             onClick={onClick}
-            className={`w-full flex items-center gap-4 py-4 px-5 rounded-2xl transition-all duration-300 border ${active
-                ? 'bg-slate-900 border-slate-800 text-primary shadow-premium'
-                : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300 hover:bg-slate-900/50'
-                }`}
+            className={`flex w-full items-center gap-4 rounded-2xl border py-4 px-5 transition-all duration-300 ${
+                active
+                    ? 'border-emerald-200 bg-emerald-50 text-emerald-900 shadow-sm'
+                    : 'border-transparent bg-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-800'
+            }`}
         >
-            <div className={`p-2 rounded-lg transition-colors ${active ? 'bg-primary/10 text-primary' : 'bg-slate-900/50 text-slate-600'}`}>
+            <div className={`rounded-lg p-2 transition-colors ${active ? 'bg-white text-emerald-700 shadow-sm' : 'bg-slate-100 text-slate-500'}`}>
                 {icon}
             </div>
-            <span className={`text-[13px] font-bold tracking-tight transition-colors ${active ? 'text-slate-50' : ''}`}>
+            <span className={`text-[13px] font-bold tracking-tight ${active ? 'text-slate-900' : ''}`}>
                 {label}
             </span>
             {active && (
                 <motion.div layoutId="tab-active-indicator" className="ml-auto">
-                    <ChevronRight className="w-4 h-4" />
+                    <ChevronRight className="h-4 w-4 text-emerald-600" />
                 </motion.div>
             )}
         </button>
     )
 }
 
-function ScriptsContent({ roteiros, onCopy }: any) {
+function ScriptsContent({ roteiros, onCopy }: { roteiros: any[]; onCopy: (t: string) => void }) {
     return (
-        <div className="space-y-16 not-prose mt-4">
+        <div className="not-prose mt-4 space-y-16">
             {roteiros.map((script: any, i: number) => (
-                <div key={i} className="group relative space-y-8 pb-16 border-b border-slate-900 last:border-0 last:pb-0">
-                    <div className="flex justify-between items-start">
+                <div key={i} className="group relative space-y-8 border-b border-slate-200 pb-16 last:border-0 last:pb-0">
+                    <div className="flex items-start justify-between">
                         <div className="space-y-1">
-                            <span className="text-[10px] font-bold text-primary uppercase tracking-[0.2em]">Roteiro de Alta Performance</span>
-                            <h3 className="text-2xl font-bold font-display text-slate-100">{script.tema}</h3>
+                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-700">Roteiro de alta performance</span>
+                            <h3 className="font-display text-2xl font-bold text-slate-900">{script.tema}</h3>
                         </div>
                         <button
+                            type="button"
                             onClick={() => onCopy(`${script.visual}\n\n${script.texto}`)}
-                            className="p-3 bg-slate-900 border border-slate-800 rounded-xl text-slate-500 hover:text-white hover:border-slate-700 transition-all group-hover:shadow-premium"
+                            className="rounded-xl border border-slate-200 bg-white p-3 text-slate-500 shadow-sm transition-all hover:border-slate-300 hover:text-slate-900"
                         >
-                            <Copy className="w-4 h-4" />
+                            <Copy className="h-4 w-4" />
                         </button>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
                         <div className="space-y-4">
-                            <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                                <div className="w-1.5 h-1.5 rounded-full bg-primary" /> Direção Visual
+                            {script.image_url ? (
+                                <>
+                                    <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                                        <div className="h-1.5 w-1.5 rounded-full bg-emerald-600" /> Criativo (IA)
+                                    </div>
+                                    <div className="overflow-hidden rounded-3xl border border-slate-200 bg-slate-50 shadow-sm">
+                                        <img
+                                            src={script.image_url}
+                                            alt={`Criativo: ${script.tema}`}
+                                            className="h-auto w-full object-cover"
+                                            loading="lazy"
+                                        />
+                                    </div>
+                                </>
+                            ) : null}
+                            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                                <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Direção visual
                             </div>
-                            <div className="p-6 bg-slate-950/50 border border-slate-900 rounded-3xl text-sm text-slate-400 leading-relaxed border-l-2 border-l-primary/50">
+                            <div className="rounded-3xl border border-slate-200 border-l-4 border-l-emerald-500/60 bg-slate-50 p-6 text-sm leading-relaxed text-slate-700">
                                 {script.visual}
                             </div>
                         </div>
                         <div className="space-y-4">
-                            <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                                <div className="w-1.5 h-1.5 rounded-full bg-secondary" /> Script / Narração
+                            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                                <div className="h-1.5 w-1.5 rounded-full bg-emerald-800/70" /> Script / narração
                             </div>
-                            <div className="p-6 bg-slate-950/50 border border-slate-900 rounded-3xl text-sm text-slate-300 italic leading-relaxed font-sans border-l-2 border-l-secondary/50">
-                                "{script.texto}"
+                            <div className="rounded-3xl border border-slate-200 border-l-4 border-l-emerald-500/40 bg-white p-6 font-sans text-sm italic leading-relaxed text-slate-700">
+                                &ldquo;{script.texto}&rdquo;
                             </div>
                         </div>
                     </div>

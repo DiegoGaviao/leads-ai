@@ -10,6 +10,12 @@ from dotenv import load_dotenv
 # Database & Services
 from database import get_supabase_client
 from services import AICouncilService
+from services_artisan import apply_strategy_creatives
+from market_insights import (
+    build_full_insights_block,
+    build_client_posts_summary,
+    build_anonymous_market_suggestions,
+)
 import resend
 from email_templates import get_professional_strategy_email
 
@@ -84,14 +90,32 @@ def process_generic(data, is_old=False):
     try:
         # 1. Contexto de Posts
         posts_context = "Sem histórico de posts disponível."
+        posts_list: list = []
         if is_old:
             p_res = supabase.table('analyzed_posts').select('*').eq('client_id', brand_id).execute()
             if p_res.data:
                 posts_context = "\n".join([f"- {p.get('post_link')} | Views: {p.get('views')}" for p in p_res.data])
+                posts_list = [
+                    {
+                        "views": p.get("views"),
+                        "likes": p.get("likes"),
+                        "comments": p.get("comments") or 0,
+                        "shares": p.get("shares") or 0,
+                        "saves": p.get("saves") or 0,
+                        "media_type": "legacy",
+                        "permalink": p.get("post_link"),
+                    }
+                    for p in p_res.data
+                ]
         else:
             p_res = supabase.table('leads_ai_posts').select('*').eq('brand_id', brand_id).execute()
             if p_res.data:
-                posts_context = "\n".join([f"- {p.get('permalink')} | Views: {p.get('views')}" for p in p_res.data])
+                posts_list = p_res.data
+                # Incluímos mais sinais além de views para a IA conseguir ajustar ganchos/estrutura com base em retenção e intenção.
+                posts_context = "\n".join([
+                    f"- {p.get('permalink')} | Views: {p.get('views')} | Likes: {p.get('likes')} | Comments: {p.get('comments')} | Shares: {p.get('shares')} | Saves: {p.get('saves')}"
+                    for p in p_res.data
+                ])
 
         # 2. Briefing Dict
         tone_matrix = data.get('tone_voice_matrix', {}) or {}
@@ -101,50 +125,97 @@ def process_generic(data, is_old=False):
 
         briefing_dict = {
             'mission': data.get('mission') or data.get('missao', ''),
-            'tone_voice': data.get('tone_voice', 'Profissional'),
+            'tone_voice': data.get('tone_voice', tone_matrix.get('toneVoice', 'Profissional')),
             'authority': data.get('authority_proof') or 'Especialista',
             'big_promise': data.get('big_promise', 'Transformação'),
             'enemy': data.get('enemy', ''),
             'pain_point': data.get('pain_point', data.get('dor_cliente', '')),
             'desire_point': data.get('desire_point', tone_matrix.get('dream', '')),
             'method_name': data.get('method_name', ''),
-            'dream_client': data.get('dream_client') or tone_matrix.get('dreamClient', '')
+            'dream_client': data.get('dream_client') or tone_matrix.get('dreamClient', ''),
+            'brand_values': tone_matrix.get('brandValues', ''),
+            'offer_details': tone_matrix.get('offerDetails', ''),
+            'differentiation': tone_matrix.get('differentiation', '')
         }
 
-        # 3. IA
+        # 3. IA (insights = resumo do cliente + sugestões de mercado anônimas)
         print(f"🧠 Gerando Estratégia para {email}...")
-        strategy_json = AICouncilService.generate_strategy(briefing_dict, "Análise de DNA", posts_context)
+        if is_old:
+            insights_block = (
+                build_client_posts_summary(posts_list)
+                + "\n\n"
+                + build_anonymous_market_suggestions(supabase, exclude_brand_id=None)
+            )
+        else:
+            insights_block = build_full_insights_block(supabase, posts_list, str(brand_id))
+        strategy_json = AICouncilService.generate_strategy(briefing_dict, insights_block, posts_context)
+        slug = (data.get("instagram_handle") or "").strip().lstrip("@") or str(brand_id)
+        strategy_json = apply_strategy_creatives(strategy_json, briefing_dict, storage_slug=slug)
 
-        # 4. Salva Estratégia (Sempre no schema novo para unificar o rastreamento)
-        supabase.table('leads_ai_strategies').insert({
-            'brand_id': brand_id, # Usamos este campo para marcar como "já gerado" tanto para old quanto new
-            'persona_markdown': strategy_json.get('persona', ''),
-            'strategy_markdown': strategy_json.get('estrategia', ''),
-            'scripts_json': strategy_json.get('roteiros', []),
-        }).execute()
+        # 4. Salva Estratégia
+        strategy_id = None
+        try:
+            # Tenta salvar no banco de dados novo
+            # Se for old schema, tentamos vincular se a marca existir. 
+            # Se não existir, o insert vai falhar se brand_id for obrigatório e FK violada.
+            
+            payload = {
+                'persona_markdown': strategy_json.get('persona', ''),
+                'strategy_markdown': strategy_json.get('estrategia', ''),
+                'scripts_json': strategy_json.get('roteiros', []),
+            }
+            
+            # Se is_old, vamos tentar garantir que a brand existe ou salvar sem brand_id se permitido
+            # Mas como o worker usa brand_id para filtrar pendentes, precisamos dele.
+            
+            target_brand_id = brand_id
+            if is_old:
+                # Verifica se a brand existe na tabela nova
+                b_check = supabase.table('leads_ai_brands').select('id').eq('id', brand_id).execute()
+                if not b_check.data:
+                    # Cria um registro placeholder na tabela nova para satisfazer a FK e o filtro de processados
+                    print(f"📦 Criando vínculo de marca para briefing antigo: {brand_id}")
+                    supabase.table('leads_ai_brands').insert({
+                        'id': brand_id,
+                        'email': email,
+                        'instagram_handle': data.get('instagram_handle', f"old_{brand_id[:8]}")
+                    }).execute()
+            
+            payload['brand_id'] = target_brand_id
+            
+            res = supabase.table('leads_ai_strategies').insert(payload).execute()
+            if res.data:
+                strategy_id = res.data[0]['id']
+                print(f"💾 Estratégia salva no banco! ID: {strategy_id}")
+        except Exception as db_err:
+            logger.warning(f"⚠️ Aviso: Não foi possível salvar estratégia no banco: {db_err}")
 
         # 5. E-mail
         if email:
-            html_body = get_professional_strategy_email(
-                strategy_json.get('persona', ''),
-                strategy_json.get('estrategia', ''),
-                strategy_json.get('roteiros', [])
-            )
-            resend.Emails.send({
-                "from": from_addr,
-                "to": email,
-                "subject": "🎉 Sua Estratégia Leads AI está Pronta!",
-                "html": html_body
-            })
-            print(f"✅ E-mail enviado com sucesso para {email}!")
-            print(f"📢 NOTIFICAÇÃO ADMIN: Estratégia gerada e enviada para {email} (Marca: {data.get('instagram_handle', 'N/A')})")
+            try:
+                print(f"📧 Preparando envio de e-mail para {email}...")
+                html_body = get_professional_strategy_email(
+                    strategy_json.get('persona', ''),
+                    strategy_json.get('estrategia', ''),
+                    strategy_json.get('roteiros', [])
+                )
+                res_email = resend.Emails.send({
+                    "from": from_addr,
+                    "to": email,
+                    "subject": "🎉 Sua Estratégia Leads AI está Pronta!",
+                    "html": html_body
+                })
+                print(f"✅ E-mail enviado com sucesso para {email}! ID: {res_email}")
+                print(f"📢 NOTIFICAÇÃO ADMIN: Estratégia enviada para {email} (Instagram: {data.get('instagram_handle', 'N/A')})")
+            except Exception as email_err:
+                logger.error(f"❌ Erro ao enviar e-mail para {email}: {email_err}")
 
-        # Marcar como notificado (Old Schema) - Omitido pois a coluna status não existe
-        # if is_old:
-        #     supabase.table('briefings').update({'status': 'notified'}).eq('id', data['id']).execute()
+        # Marcar como processado (Para evitar loops infinitos caso o INSERT no banco falhe)
+        # TODO: Implementar coluna 'processed' ou similar se necessário.
+        # Por enquanto, se for is_old, vamos apenas logar que terminamos.
 
     except Exception as e:
-        logger.error(f"❌ Erro ao processar {email}: {e}")
+        logger.error(f"❌ Erro Crítico ao processar {email}: {e}")
 
 def run_worker():
     while True:

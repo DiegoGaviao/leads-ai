@@ -13,6 +13,7 @@ const steps = [
     { id: 3, text: "Consultando o Crítico Criativo (Mistral)...", icon: <Brain className="w-5 h-5" /> },
     { id: 4, text: "Lapidando a persona para evitar clichês...", icon: <CheckCircle2 className="w-5 h-5" /> },
     { id: 5, text: "Roteirizando 5 novas ideias com alma...", icon: <Code className="w-5 h-5" /> },
+    { id: 6, text: "Gerando criativos de imagem (um por roteiro)...", icon: <Sparkles className="w-5 h-5" /> },
 ]
 
 export function GenerationView({ data, onComplete }: GenerationViewProps) {
@@ -20,7 +21,6 @@ export function GenerationView({ data, onComplete }: GenerationViewProps) {
     const [error, setError] = useState<string | null>(null)
 
     useEffect(() => {
-        // 1. Simulação visual dos passos
         const stepInterval = setInterval(() => {
             setCurrentStep(prev => {
                 if (prev < steps.length - 1) return prev + 1
@@ -28,9 +28,8 @@ export function GenerationView({ data, onComplete }: GenerationViewProps) {
             })
         }, 4000)
 
-        // 2. Chamada Real para o Backend
         const startAnalysis = async () => {
-            const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+            const API_URL = import.meta.env.VITE_API_URL || "https://leads-ai-v2.onrender.com";
             try {
                 const response = await fetch(`${API_URL}/analyze`, {
                     method: 'POST',
@@ -42,7 +41,6 @@ export function GenerationView({ data, onComplete }: GenerationViewProps) {
 
                 const result = await response.json()
                 if (result.success) {
-                    // Pequeno delay para garantir que o usuário viu o passo final
                     setTimeout(() => onComplete(result.data), 1500)
                 } else {
                     throw new Error('Erro no processamento da estratégia')
@@ -59,58 +57,58 @@ export function GenerationView({ data, onComplete }: GenerationViewProps) {
 
     if (error) {
         return (
-            <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center">
-                <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center text-red-500 mb-6">
-                    <AlertCircle className="w-10 h-10" />
+            <div className="flex min-h-screen flex-col items-center justify-center p-6 text-center antialiased">
+                <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-red-50 text-red-600">
+                    <AlertCircle className="h-10 w-10" />
                 </div>
-                <h3 className="text-2xl font-bold mb-2">Ops! Houve um problema</h3>
-                <p className="text-muted-foreground mb-8">{error}</p>
-                <button onClick={() => window.location.reload()} className="btn-secondary">Tentar novamente</button>
+                <h3 className="mb-2 text-2xl font-bold text-slate-900">Ops! Houve um problema</h3>
+                <p className="mb-8 text-slate-600">{error}</p>
+                <button type="button" onClick={() => window.location.reload()} className="btn-secondary">Tentar novamente</button>
             </div>
         )
     }
 
     return (
-        <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center">
-            <div className="relative mb-20">
-                <div className="absolute inset-0 bg-primary/20 blur-[100px] animate-pulse-slow rounded-full" />
+        <div className="flex min-h-screen flex-col items-center justify-center p-6 text-center antialiased">
+            <div className="relative mb-16">
+                <div className="absolute inset-0 animate-pulse rounded-full bg-emerald-500/10 blur-[80px]" />
                 <motion.div
                     animate={{ rotate: 360 }}
                     transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-                    className="relative w-32 h-32 border-2 border-white/10 rounded-full flex items-center justify-center"
+                    className="relative flex h-32 w-32 items-center justify-center rounded-full border-2 border-slate-200 bg-white shadow-sm"
                 >
-                    <Brain className="w-12 h-12 text-primary" />
+                    <Brain className="h-12 w-12 text-emerald-600" />
                 </motion.div>
             </div>
 
-            <div className="max-w-md w-full space-y-4">
+            <div className="w-full max-w-md space-y-4">
                 <AnimatePresence mode="wait">
                     <motion.div
                         key={currentStep}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
-                        className="flex items-center gap-4 p-6 glass rounded-2xl text-left border-primary/20"
+                        className="glass flex items-center gap-4 rounded-2xl border border-emerald-100 p-6 text-left shadow-md"
                     >
-                        <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary shrink-0">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
                             {steps[currentStep].icon}
                         </div>
-                        <p className="text-lg font-medium">{steps[currentStep].text}</p>
+                        <p className="text-lg font-medium text-slate-800">{steps[currentStep].text}</p>
                     </motion.div>
                 </AnimatePresence>
 
-                <div className="flex gap-1 justify-center pt-8">
+                <div className="flex justify-center gap-1 pt-8">
                     {steps.map((_, i) => (
                         <div
                             key={i}
-                            className={`h-1.5 rounded-full transition-all duration-500 ${i <= currentStep ? 'w-8 bg-primary' : 'w-2 bg-white/10'}`}
+                            className={`h-1.5 rounded-full transition-all duration-500 ${i <= currentStep ? 'w-8 bg-emerald-600' : 'w-2 bg-slate-200'}`}
                         />
                     ))}
                 </div>
             </div>
 
-            <p className="fixed bottom-12 text-muted-foreground text-sm flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-accent" />
+            <p className="fixed bottom-12 flex items-center gap-2 text-sm text-slate-500">
+                <Sparkles className="h-4 w-4 text-emerald-600" />
                 A IA está cruzando seus dados de retenção agora...
             </p>
         </div>

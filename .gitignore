@@ -34,3 +34,6 @@ API_KEYS_INVENTORY.md
 # Build
 dist/
 build/
+
+# Supabase CLI (credenciais locais do link)
+SAAS_PLATFORM/supabase/.temp/

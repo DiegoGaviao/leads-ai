@@ -10,6 +10,7 @@ import json
 import html as _html
 import resend
 from services import AICouncilService
+from services_artisan import apply_strategy_creatives
 from email_templates import get_professional_strategy_email
 from market_insights import build_full_insights_block
 
@@ -598,6 +599,8 @@ async def run_strategy_pipeline(brand_id: str):
         insights_block = build_full_insights_block(supabase, posts, brand_id)
         logging.info("🧠 run_strategy_pipeline: gerando estratégia para %s", email or brand_id)
         strategy_json = AICouncilService.generate_strategy(briefing_dict, insights_block, posts_context)
+        slug = (brand.get("instagram_handle") or "").strip().lstrip("@") or str(brand_id)
+        strategy_json = apply_strategy_creatives(strategy_json, briefing_dict, storage_slug=slug)
 
         save_payload = {
             "brand_id": brand_id,
@@ -606,13 +609,18 @@ async def run_strategy_pipeline(brand_id: str):
             "scripts_json": strategy_json.get("roteiros", []),
         }
         supabase.table("leads_ai_strategies").insert(save_payload).execute()
+        roteiros = strategy_json.get("roteiros", []) or []
+        with_img = sum(1 for r in roteiros if isinstance(r, dict) and r.get("image_url"))
         append_lead_event(
             brand_id=brand_id,
             event_type="strategy_generated",
             email=email,
             instagram=brand.get("instagram_handle"),
             plan=brand.get("plan"),
-            payload={"roteiros_count": len(strategy_json.get("roteiros", []) or [])},
+            payload={
+                "roteiros_count": len(roteiros),
+                "creatives_count": with_img,
+            },
         )
 
         if not email:
