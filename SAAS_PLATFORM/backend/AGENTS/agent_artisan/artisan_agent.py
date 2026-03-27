@@ -10,6 +10,19 @@ import requests
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("AgentArtisan")
 
+# Síntese de DOCS/Sora prompts.md + MARKETING_ASSETS/DHAWK_BRAND_STANDARD.md (padrão Dhawk / relatório)
+_SORA_STRUCTURE_RULES = """
+Estruture CADA prompt de imagem em INGLÊS seguindo este método (Sora-style / relatório Leads AI):
+1) Cena principal em 3–5 frases objetivas: lugar, momento, sujeitos ou objetos, ação, enquadramento.
+2) Listas com hífen quando útil (variações de styling, luz, materiais).
+3) Restrições negativas explícitas: no readable text, no logos, no watermarks, no subtitles, avoid symmetrical cliché framing unless intentional, avoid plastic CGI skin / wax faces.
+4) Bloco técnico curto: cinematic lighting, shallow depth of field, ultra-detailed, professional color grading, believable optics (as if shot on full-frame), vertical-friendly composition for Instagram square crop.
+5) Quando fizer sentido com o roteiro, incorpore sutilmente a estética Dhawk: sophisticated dark or neutral base, subtle electric emerald green (#00FF41 family) as accent light or UI glow — luxury tech, minimalist, glass-friendly reflections — SEM dominar a cena se o roteiro for lifestyle orgânico ou clínico acolhedor.
+"""
+
+_DALLE_CHAR_LIMIT = 3900
+
+
 class ArtisanAgent:
     """
     Agente 06: Artisan
@@ -28,23 +41,23 @@ class ArtisanAgent:
         logger.info(f"🎨 Engenharia de Prompt Visual iniciada para: {brand_tone}")
         
         system_prompt = f"""
-        Você é o 'Artisan', o Diretor de Arte do Conselho Leads AI.
-        Sua missão é criar prompts de imagem de ultra-realismo ou estilo premium para redes sociais.
-        
-        CONTEXTO DA MARCA:
+        Você é o 'Artisan', o Diretor de Arte do Conselho Leads AI (Dhawk Labs).
+        Sua missão é criar prompts de imagem para DALL·E / geradores similares: ultra-realismo ou editorial premium para Instagram.
+
+        CONTEXTO DA MARCA DO CLIENTE:
         - Tom: {brand_tone}
         - Público: {audience_dna}
-        
-        REGRAS DE OURO:
-        1. Estética: Estilo 'Editorial Photography', 'Cinematic Lighting' ou 'High-end Tech Branding'.
-        2. Evite o 'olhar de IA' genérico. Busque texturas reais, profundidade de campo (bokeh) e enquadramentos modernos.
-        3. Se o roteiro for técnico, use elementos de design clean e futurista.
-        4. Se for lifestyle, use iluminação natural e expressões orgânicas.
-        
-        FORMATO DE SAÍDA (obrigatório, uma linha raiz):
+
+        {_SORA_STRUCTURE_RULES}
+
+        REGRAS ADICIONAIS:
+        - Três variações por roteiro: (A) mais íntima / humana, (B) mais gráfica / conceito, (C) mais "authority" ou produto-contexto — sempre coerente com o texto do roteiro.
+        - Nunca inclua texto legível, marcas ou UI fake com palavras na imagem.
+
+        FORMATO DE SAÍDA (obrigatório):
         Retorne SOMENTE um objeto JSON válido neste formato exato:
-        {"prompts": ["prompt 1 em inglês", "prompt 2 em inglês", "prompt 3 em inglês"]}
-        Cada prompt deve ser detalhado para geração de imagem (composição, luz, textura, estilo).
+        {{"prompts": ["prompt 1 em inglês", "prompt 2 em inglês", "prompt 3 em inglês"]}}
+        Cada string deve ser um único parágrafo denso em inglês seguindo a estrutura acima (sem perguntas ao modelo, só descrição).
         """
         
         user_msg = f"Roteiro Sugerido: {script_text}\n\nGere 3 conceitos visuais magnéticos para este post."
@@ -85,13 +98,34 @@ class ArtisanAgent:
                 logger.error("❌ Erro ao gerar prompts visuais: %s", e2)
                 return []
 
+    @staticmethod
+    def wrap_prompt_for_dalle(inner_prompt: str) -> str:
+        """
+        Envelope estilo Sora (geração direta) + restrições seguras para API de imagem.
+        """
+        inner = (inner_prompt or "").strip()
+        if not inner:
+            return ""
+        prefix = (
+            "Generate a single photorealistic editorial image from this description only — "
+            "do not ask questions. No readable text, logos, watermarks, or UI mockups with words.\n\n"
+        )
+        suffix = (
+            "\n\nTechnical: cinematic lighting, shallow depth of field, ultra-detailed, "
+            "natural skin texture where people appear, professional color grading, "
+            "believable full-frame photography, square crop friendly for Instagram."
+        )
+        out = f"{prefix}{inner}{suffix}"
+        return out[:_DALLE_CHAR_LIMIT]
+
     def create_image(self, prompt: str) -> str:
         """
         Chama a API de geração de imagem (DALL-E 3 por padrão).
         Retorna a URL da imagem gerada.
         """
-        logger.info(f"📸 Gerando imagem real para o prompt: {prompt[:50]}...")
-        
+        final_prompt = self.wrap_prompt_for_dalle(prompt)
+        logger.info("📸 Gerando imagem DALL·E (chars=%s): %s...", len(final_prompt), final_prompt[:50])
+
         try:
             if self.provider == "openai":
                 q = (os.getenv("LEADS_AI_IMAGE_QUALITY") or "standard").strip().lower()
@@ -99,7 +133,7 @@ class ArtisanAgent:
                     q = "standard"
                 response = self.openai_client.images.generate(
                     model="dall-e-3",
-                    prompt=prompt,
+                    prompt=final_prompt,
                     size="1024x1024",
                     quality=q,
                     n=1,
