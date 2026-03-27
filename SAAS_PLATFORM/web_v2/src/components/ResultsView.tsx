@@ -156,6 +156,10 @@ function ScriptsContent({ roteiros, onCopy }: { roteiros: any[]; onCopy: (t: str
                                     <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
                                         <div className="h-1.5 w-1.5 rounded-full bg-emerald-600" /> Criativo (IA)
                                     </div>
+                                    <p className="text-xs leading-relaxed text-slate-500">
+                                        A imagem é gerada pela IA a partir do roteiro falado, do quadro &quot;Direção visual&quot;
+                                        abaixo e das regras da marca (sem texto legível no quadro).
+                                    </p>
                                     <div className="overflow-hidden rounded-3xl border border-slate-200 bg-slate-50 shadow-sm">
                                         <img
                                             src={script.image_url}
@@ -167,7 +171,7 @@ function ScriptsContent({ roteiros, onCopy }: { roteiros: any[]; onCopy: (t: str
                                 </>
                             ) : null}
                             <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                                <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Direção visual
+                                <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Direção visual (roteiro)
                             </div>
                             <div className="rounded-3xl border border-slate-200 border-l-4 border-l-emerald-500/60 bg-slate-50 p-6 text-sm leading-relaxed text-slate-700">
                                 {script.visual}

@@ -40,6 +40,7 @@ class ArtisanAgent:
         brand_tone: str,
         audience_dna: str,
         creative_theme: str | None = None,
+        scene_direction_pt: str | None = None,
     ) -> List[str]:
         """
         Recebe um roteiro e gera 3 opções de prompts visuais otimizados para IAs de imagem.
@@ -73,11 +74,23 @@ class ArtisanAgent:
                 f"\nTEMA CRIATIVO PRIORITÁRIO (pedido explícito do cliente — alinhe os 3 conceitos a isto): "
                 f"{creative_theme.strip()}\n"
             )
+        scene_extra = ""
+        sd = (scene_direction_pt or "").strip()
+        if sd:
+            sd = sd[:1200]
+            scene_extra = (
+                f"\nDIREÇÃO VISUAL DO CONSELHO (português — traduza o clima e a composição para os prompts em inglês; "
+                f"esta nota deve guiar enquadramento e metáfora, não um único objeto solto do texto. "
+                f"Se citar papel/recibos/planilhas/telas com texto, mostre a MESMA tensão sem superfície legível: "
+                f"sombras, profundidade de campo, gestos, textura abstrata.):\n{sd}\n"
+            )
         user_msg = (
             f"Roteiro Sugerido: {script_text}\n"
-            f"{theme_extra}\n"
+            f"{theme_extra}"
+            f"{scene_extra}\n"
             "Gere 3 conceitos visuais magnéticos para este post. "
-            "Nenhum conceito pode incluir documentos, telas com texto, ou números legíveis."
+            "Nenhum conceito pode incluir documentos, telas com texto, ou números legíveis. "
+            "Integre roteiro + direção visual do conselho numa cena única coerente (sem ignorar a direção por um detalhe aleatório do roteiro)."
         )
         
         def _call(model_name: str):

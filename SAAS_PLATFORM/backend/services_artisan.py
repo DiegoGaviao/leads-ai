@@ -95,12 +95,15 @@ class VisualService:
                 creative_theme = str(themes_list[i]).strip()
                 post["tema_criativo_cliente"] = creative_theme
 
+            scene_pt = (post.get("visual") or "").strip() or None
+
             try:
                 prompts = artisan.generate_visual_prompts(
                     script_text,
                     brand_tone,
                     audience_dna,
                     creative_theme=creative_theme,
+                    scene_direction_pt=scene_pt,
                 )
             except Exception as e:
                 logger.warning("Falha nos prompts visuais roteiro %s: %s", i + 1, e)
